@@ -1,0 +1,48 @@
+# Python and operating-system artifacts
+__pycache__/
+*.py[cod]
+*.so
+.Python
+.venv/
+venv/
+env/
+.pytest_cache/
+.mypy_cache/
+.DS_Store
+
+# Secrets and machine-specific settings
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+credentials.json
+secrets.*
+
+# Private manuscript and audit materials
+private/
+../private/
+*.docx
+*.pdf
+!docs/*.pdf
+
+# Raw and licensed data (only synthetic examples and source manifests are public)
+data/raw/
+data/private/
+data/restricted/
+!data/public/
+!data/public/*.csv
+
+# Large or reproducible-on-demand artifacts
+outputs/smoke_test*/
+outputs/validation_seed_*/
+outputs/full_run*.log
+outputs/logs/
+outputs/**/*.parquet
+outputs/**/*.pkl
+outputs/**/*.npy
+
+# IDE and notebook checkpoints
+.vscode/
+.idea/
+.ipynb_checkpoints/

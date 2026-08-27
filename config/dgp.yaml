@@ -1,0 +1,46 @@
+project:
+  title: "ESG, Audit Quality, and Investment Efficiency: A Monte Carlo Statistical Diagnostic Study"
+  seed: 20260827
+  years: [2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024]
+  source_boundary: "Synthetic DGP only; no observation represents a real firm."
+
+panel:
+  primary_firms: 300
+  small_firms: 100
+  large_firms: 500
+  industries: 10
+
+simulation:
+  primary_repetitions: 1000
+  sensitivity_repetitions: 300
+  bootstrap_replications: 399
+  base_sigma: 0.032
+  esg_innovation_sd: 3.8
+  esg_persistence: 0.95
+  esg_lower: 0.0
+  esg_upper: 100.0
+  full_effect:
+    esg_log_sd: -0.10
+    esg_big4_log_sd: -0.12
+  half_effect:
+    esg_log_sd: -0.05
+    esg_big4_log_sd: -0.06
+
+estimation:
+  analysis_years: [2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023]
+  first_stage_fixed_effects: [industry_year]
+  second_stage_fixed_effects: [firm, industry_year]
+  primary_inference: firm_clustered
+  diagnostic_inference: firm_year_two_way_clustered
+  alpha: 0.05
+  monte_carlo_interval: "normal approximation p ± 1.96*sqrt(p*(1-p)/R)"
+  wild_bootstrap: "restricted Rademacher wild cluster bootstrap-t at the firm level"
+
+robustness:
+  include_lagged_esg_in_first_stage: true
+  missingness_stress_test: "MAR-like ESG missingness increasing with low latent quality and high risk; analyses use complete cases"
+  outcomes: [log_absolute_residual, raw_absolute_residual, oracle_log_true_deviation]
+
+publication:
+  public_assets: [source_code, config, synthetic_example, aggregate_tables, figures, documentation]
+  private_assets: [manuscript_docx, full_simulation_outputs, raw_or_licensed_inputs, audit_logs]
