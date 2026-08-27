@@ -1,0 +1,66 @@
+{
+  "schema_version": 1,
+  "description": "Public aggregate-table provenance for editable publication figures.",
+  "figures": [
+    {
+      "stem": "figure-01-primary-cluster-inference",
+      "generator": "src/export-publication-figures.py",
+      "source_table": "outputs/final-run-round2-pooled/tables/table-6-independent-seed-crosscheck.csv",
+      "source_table_sha256": "f71c2b45e06b32134105ac454f855323e6ad5f54573a167d21bd496d862bf566",
+      "assets": {
+        "pdf": "9a59531ef50032ba002f68087b168067595d526604fde80ea36acca91365a513",
+        "svg": "209c6ffc5148d2d5bc835d4052189f960d3c4817b50aa6bc622b5a159a5dabd6",
+        "png": "8de555d2325c651eb44cf430d40d225e9e592c76f45d49e75f9958d5f049ea58",
+        "tiff": "d4cca8efa98a82f867dd30c4ecd9381cf3c300604d7852c347e001d60c9df657"
+      }
+    },
+    {
+      "stem": "figure-02-dgp-scale-mapping",
+      "generator": "src/export-publication-figures.py",
+      "source_table": "outputs/round2-pooled/tables/table-11-scale-mapping-pooled.csv",
+      "source_table_sha256": "2eba03fb25321e0ff1a2bae265e0a9464d56be7bdf1fb39c202b2948e20bcd0f",
+      "assets": {
+        "pdf": "cb15f2a7fd05266b9db4ce1bb7552c04c7daf4415d657a1eba232eab8460cb4e",
+        "svg": "6ceecc628e16a8a7ee0065158a02cf27378546747ac333016ced49110975eddb",
+        "png": "74b5934c56bc4efa6017afbd74a3b30133d9e85b0df9311bf3ff74f9374f0701",
+        "tiff": "811db634fc1009e501558d7b3a53e5ffdcd9182c9c67c13c29831ec79c095807"
+      }
+    },
+    {
+      "stem": "figure-03-time-cluster-sensitivity",
+      "generator": "src/export-publication-figures.py",
+      "source_table": "outputs/round2-pooled/tables/table-10-time-structure-sensitivity-pooled.csv",
+      "source_table_sha256": "6e1c5065223189e4fb83e9ecaca536642dbf6a8dfa3031e8958a989407c276b7",
+      "assets": {
+        "pdf": "60ff43a1fac01f0c093644597af92b9bbd3fdcd99d0a861628ec00d3298abed4",
+        "svg": "7507969875b08d565b7ab3cec25c2fdb6375f4adfb76b0c533e49c725ed621d5",
+        "png": "bad3a586627b81dd56110fdbecbdda341e9bdbe7ba0b1c59f6f109437699debf",
+        "tiff": "2ef783ac7fb53e096adaeae2e495a818bd3212a70af9ea07bad23235402e3e03"
+      }
+    },
+    {
+      "stem": "figure-04-big-four-mechanism-ablation",
+      "generator": "src/export-publication-figures.py",
+      "source_table": "outputs/round2-big4-pooled/tables/table-9-big4-mechanism-ablation-pooled.csv",
+      "source_table_sha256": "08a1306d15aca305b2f15e15484869b658529303cba6942290c1a748b25fe336",
+      "assets": {
+        "pdf": "58092df5f19ecaffb2178e1925ecb2c04c632e3cf8f80f58a59c5294a3aeebd2",
+        "svg": "fd4a161ca635b8c589637167990cdc3d47546624b42a88d6ac5eaf3d415b4e92",
+        "png": "6f1376d78d8bc6a0b38ca90f99d93cc14f229883c7f55eb869a5d21413e3e571",
+        "tiff": "24f3afa68552cff352fb6fe5860ff1f10409ba133facc04f37ce6a49136bfd69"
+      }
+    },
+    {
+      "stem": "figure-05-availability-sensitivity",
+      "generator": "src/export-publication-figures.py",
+      "source_table": "outputs/round2-pooled/tables/table-12-selective-availability-pooled.csv",
+      "source_table_sha256": "7bb93095179a9f2bf9a66a880b4546ef937c6987806ea122095c6258e0709e22",
+      "assets": {
+        "pdf": "0001a3ab1ee2013e4d15e68567d5ac03b87db1525a89792f34baecc84772ff1f",
+        "svg": "7bfeef393c48e58dbec6fbfd57255f2d0cfe0a22ef12c1b086a0439bdfb8c201",
+        "png": "4516f332e5013a25cc6b42a02d3b756d640500445de2fe43a063c1fc3c299d8a",
+        "tiff": "f253a08c2a5eb4c81b1ecbcd6874560c6fff10d0329ec80833e0677980ab8e06"
+      }
+    }
+  ]
+}

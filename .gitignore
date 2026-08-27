@@ -25,6 +25,8 @@ private/
 *.docx
 *.pdf
 !docs/*.pdf
+# Publication vector figures are public aggregate-derived artifacts.
+!outputs/publication-figures/*.pdf
 
 # Raw and licensed data (only synthetic examples and source manifests are public)
 data/raw/

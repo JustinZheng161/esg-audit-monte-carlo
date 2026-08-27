@@ -32,15 +32,16 @@ src/run-round2-diagnostics.py                     # Time, scale, availability, a
 src/aggregate-round2-diagnostics.py               # Replicate-level pooling for round-two diagnostics
 src/run-round2-big4-mechanism.py                  # Corrected-sample-flow Big Four mechanism ablation
 src/aggregate-round2-big4-mechanism.py            # Replicate-level pooling for Big Four ablation
-src/export-publication-figures.py                   # Vector PDF and 600-dpi PNG/TIFF export from public aggregate tables
+src/export-publication-figures.py                   # Nature-style PDF/SVG/PNG/TIFF export from public aggregate tables
+tests/test-publication-figure-exports.py             # Source-to-asset, SVG-editability, format and DPI checks
 tests/test-pipeline.py                            # Core deterministic synthetic-pipeline checks
 tests/test-reviewer-revision.py                   # Public aggregate-artifact checks; private DOCX audit is opt-in
 data/public/synthetic-example-null.csv            # Synthetic schema example only
 outputs/final-run-round2-pooled/                  # Pooled main aggregate table and Figure 1
 outputs/round2-pooled/                            # Pooled time, scale, availability, and FE tables/figures
 outputs/round2-big4-pooled/                       # Pooled corrected Big Four ablation table/figure
-outputs/publication-figures/                        # Publication-grade Figure 1–5 PDF, PNG, and TIFF package
-docs/publication-figure-specification.md            # Figure formats, interval convention, and export command
+outputs/publication-figures/                        # Nature-style Figure 1–5 PDF, SVG, PNG, TIFF and source-hash manifest
+docs/publication-figure-specification.md            # Nature-style formats, provenance, interval convention and export command
 docs/repository-boundary.md                       # Explicit public/private release boundary
 ```
 
@@ -113,13 +114,14 @@ This is a **synthetic statistical diagnostic**, not a machine-learning benchmark
 
 ## Publication-grade figures
 
-The technical artwork package is generated only from the released aggregate synthetic tables. It supplies vector PDF plus 600-dpi PNG and TIFF versions, complete tick labels, 10-pt base text, and a consistent ±1.96×MCSE interval convention. Figure 2 intentionally displays no uncertainty bar for the fixed DGP parameter `γ_INT`. Regenerate the package with:
+The Nature-style technical artwork package is generated only from released aggregate synthetic tables. It supplies editable vector PDF and SVG, 600-dpi PNG and losslessly compressed 600-dpi TIFF, black text, clean axes without background grids, accessible solid colors, and a consistent ±1.96×MCSE interval convention. Figure 2 intentionally displays no uncertainty bar for the fixed DGP parameter `γ_INT`. `outputs/publication-figures/figure-source-manifest.json` records the aggregate-source path and SHA-256 hash for every figure. Regenerate and verify the full source-to-asset chain with:
 
 ```bash
 python3 src/export-publication-figures.py
+python3 tests/test-publication-figure-exports.py
 ```
 
-See [`docs/publication-figure-specification.md`](docs/publication-figure-specification.md) for source-table provenance, figure-specific interpretation, and public-release limits.
+See [`docs/publication-figure-specification.md`](docs/publication-figure-specification.md) for Nature-style production parameters, source-table provenance, figure-specific interpretation, and public-release limits.
 
 ## Repository naming
 

@@ -15,12 +15,12 @@
 |---|---|---|
 | Core simulation and pooling code | `src/esg-monte-carlo.py`; `src/compare-runs.py`; `src/run-round2-diagnostics.py`; `src/aggregate-round2-diagnostics.py`; `src/run-round2-big4-mechanism.py`; `src/aggregate-round2-big4-mechanism.py`; `src/export-publication-figures.py` | Regenerates corrected-sample-flow diagnostics and publication-grade figures from checked aggregate tables |
 | Configuration | `config/dgp.yaml` | Provides the sole executable description of synthetic assumptions |
-| Tests | `tests/test-pipeline.py`; `tests/test-reviewer-revision.py` | Checks synthetic sample flow, pooling rules, and aggregate artifact contract |
+| Tests | `tests/test-pipeline.py`; `tests/test-reviewer-revision.py`; `tests/test-publication-figure-exports.py` | Checks synthetic sample flow, pooling rules, aggregate artifact contract, and public source-to-figure reconstruction |
 | Synthetic example only | `data/public/synthetic-example-null.csv` | Demonstrates schema without real firms |
 | Pooled main evidence | `outputs/final-run-round2-pooled/tables/*.csv`; `outputs/final-run-round2-pooled/figures/figure-1-primary-operating-characteristics-pooled.png` | Corrected primary results and dual-inference visual |
 | Pooled second-round evidence | `outputs/round2-pooled/tables/*.csv`; `outputs/round2-pooled/figures/*.png`; `outputs/round2-pooled/manifest.json` | Time structure, scale mapping, availability, and first-stage FE diagnostics |
 | Pooled Big Four mechanism evidence | `outputs/round2-big4-pooled/tables/*.csv`; `outputs/round2-big4-pooled/figures/*.png`; `outputs/round2-big4-pooled/manifest.json` | Corrected-sample-flow selection-only ablation |
-| Publication figure package | `outputs/publication-figures/*.pdf`; `outputs/publication-figures/*.png`; `outputs/publication-figures/*.tiff` | Vector PDF and 600-dpi raster versions of Figures 1–5 generated only from public aggregate tables |
+| Publication figure package | `outputs/publication-figures/*.pdf`; `outputs/publication-figures/*.svg`; `outputs/publication-figures/*.png`; `outputs/publication-figures/*.tiff`; `outputs/publication-figures/figure-source-manifest.json` | Editable vector PDF/SVG, 600-dpi raster versions, and source-table SHA-256 provenance for Figures 1–5 generated only from public aggregate tables |
 | Documentation | `README.md`; `docs/*.md`; `requirements.txt`; `LICENSE`; `.gitignore` | Reproduction, provenance, and governance documentation |
 
 The private manuscript builder (`src/build-revised-manuscript.py`) is intentionally excluded from the public release because it embeds anonymous manuscript text and writes a private DOCX. It contains no reported real-company data but is not necessary to reproduce published numerical outputs.
