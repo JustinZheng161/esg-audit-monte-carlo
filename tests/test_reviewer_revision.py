@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import math
+import os
 from pathlib import Path
 
 import pandas as pd
@@ -37,10 +38,10 @@ def main() -> None:
     for name in ["figure_2_time_cluster_size_pooled.png", "figure_3_big4_mechanism_ablation_pooled.png"]:
         assert (POOLED / "figures" / name).is_file()
 
-    # The editable anonymous manuscript is intentionally private. When the test is
-    # executed in the author-controlled repository, it additionally audits the
-    # DOCX wording; a public clean clone verifies only releasable code and outputs.
-    if DOCX.is_file():
+    # The editable anonymous manuscript is intentionally private. Its audit is
+    # opt-in so a public clone can never discover a sibling private directory.
+    if os.environ.get("VERIFY_PRIVATE_MANUSCRIPT") == "1":
+        assert DOCX.is_file(), "Private manuscript audit was requested but no DOCX is present."
         document = Document(DOCX)
         text = "\n".join(paragraph.text for paragraph in document.paragraphs)
         for required in [
@@ -52,9 +53,9 @@ def main() -> None:
         for forbidden in ["manuscript editing assistance", "five-company SEC Company Facts metadata snapshot"]:
             assert forbidden not in text, f"Deprecated manuscript wording remains: {forbidden}"
         assert "N=2,000" not in text, "Main effective N remains ambiguous in manuscript text."
-        print("Reviewer-revision tests passed, including private anonymous-manuscript audit.")
+        print("Reviewer-revision tests passed, including explicit private anonymous-manuscript audit.")
     else:
-        print("Reviewer-revision tests passed; private anonymous-manuscript audit skipped in public clone.")
+        print("Reviewer-revision tests passed; private anonymous-manuscript audit not requested.")
 
 
 if __name__ == "__main__":
