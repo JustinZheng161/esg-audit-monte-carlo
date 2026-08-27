@@ -1,0 +1,4 @@
+availability_scenario,availability_code,repetitions,independent_master_seeds,mean_second_stage_n,mean_beta_interaction,mcse_beta_interaction,firm_rejection_5pct,firm_mcse,two_way_rejection_5pct,two_way_mcse,mean_error_interaction_covariance
+Complete synthetic panel,complete,1000,2,2400.0,-0.0991351218484617,0.002491067981996062,0.244,0.013581752464244074,0.29,0.01434921600645833,-0.00010731504622691199
+Adverse selective-availability stress,adverse_selective,1000,2,2165.766,-0.09963173781209457,0.0026866208718046296,0.238,0.01346684818359515,0.298,0.014463609508003178,-0.00010793795566813307
+Coverage-aligned selective-availability stress,coverage_aligned,1000,2,1983.918,-0.09943053627876708,0.0028873183806440894,0.243,0.013562853682024296,0.278,0.01416742743055351,-0.00010964630282662272

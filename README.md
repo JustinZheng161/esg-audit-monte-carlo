@@ -1,141 +1,115 @@
-# ESG, Audit Quality, and Investment Efficiency — Monte Carlo Diagnostic
+# ESG, Audit Quality, and Investment Efficiency: Synthetic Monte Carlo Diagnostics
 
-> **Scope statement.** This repository implements a **synthetic-data Monte Carlo diagnostic**. It does not contain an empirical ESG panel, does not estimate the effect of ESG or audit quality for any real firm, and must not be cited as evidence of a real-world causal relationship.
+This repository reproduces a **synthetic-data Monte Carlo diagnostic** for a two-stage panel workflow linking lagged ESG, a Big Four auditor indicator, and a residual-based investment outcome. It is not an empirical ESG study and contains no real-company financial, ESG, auditor, regulatory, or commercial-vendor observations.
 
-## Purpose
+> **Scope.** The package evaluates operating characteristics under a fully documented synthetic data-generating process (DGP). It does not estimate causal effects, validate Big Four status as a measure of audit or assurance quality, calibrate ESG-coverage probabilities, or support conclusions about real firms.
 
-This package evaluates the operating characteristics of a two-stage residual-based design. The first stage estimates expected investment and defines investment inefficiency as the absolute residual. The second stage regresses log inefficiency on lagged ESG, lagged Big Four status, and their interaction, including firm and industry-by-year fixed effects. The package tests how the design behaves under a documented null and alternative DGP, rather than treating one regression table as conclusive.
+## What changed in the round-two revision
 
-The implementation reflects two methodological cautions. First, cluster-robust procedures depend on an adequate number of clusters, and few-cluster settings warrant dedicated calibration [1] [2]. Second, recent multiway-bootstrap work underscores that serially correlated time effects cannot be addressed by simply assuming every two-way estimator is well behaved [3].
+| Topic | Earlier implementation | Corrected round-two implementation |
+|---|---|---|
+| First-stage sample | The first stage was inadvertently fitted after second-stage lag/lead exclusions. | The first-stage expected-investment equation is fitted on the full **3,000-row** synthetic panel. The second stage then uses **2,400** lag/lead-valid rows. |
+| Main evidence | Prior output paths reflected the former sample-flow implementation. | Reported primary results use `outputs/final_run_round2_*` and the two-seed pooled table. |
+| Scale interpretation | The DGP log-SD interaction and log-absolute-residual coefficient were reported without an oracle mapping. | An oracle-versus-estimated-residual scale-mapping simulation distinguishes \(\gamma_{INT}\) from \(\beta_3\). |
+| Availability | A single “MAR-like” label was used. | Complete, adverse selective-availability, and non-calibrated coverage-aligned synthetic stresses are reported. |
+| First-stage FE | Overlap was discussed but not quantified across specifications. | Industry×year, industry+year, and no-first-stage-FE specifications report estimated-residual and oracle outcomes. |
+| Big Four mechanism | Former ablation values were based on the former sample flow. | A corrected-sample-flow selection-only ablation is rerun and pooled over two independent seeds. |
+| Figure 1 | The inference methods were not displayed side-by-side. | Pooled N=300 grouped bars distinguish firm-clustered and two-way firm–year rejection probabilities. |
 
-## Key findings from the canonical run
+## Key pooled synthetic findings
 
-The canonical outputs use master seed `20260827`, 1,000 primary repetitions, 300 sensitivity repetitions, and 399 restricted Rademacher wild-bootstrap draws where indicated. A separate full run with master seed `20260828` serves as an independent reproducibility check. The review-extension outputs additionally pool two independent 500-repetition seeds for an 8/18/28-time-cluster gradient and a Big Four selection-versus-direct-variance mechanism ablation.
+The primary N=300 null combines two independent master seeds and 2,000 outer repetitions. The firm-clustered 5% rejection frequency is **0.064** (MCSE 0.00547 before display rounding), and the two-way firm–year rate is **0.1035** (MCSE 0.00681). Under the full alternative, the corresponding rates are **0.246** and **0.287**. These values are operating characteristics of the specified DGP, not performance guarantees or empirical estimates.
 
-| Design | Metric | Canonical result | Independent-seed pooled check | Interpretation |
-|---|---:|---:|---:|---|
-| N=300 null | Firm-clustered 5% rejection rate | 0.072 (MCSE 0.008) | 0.065 (MCSE 0.006; 2,000 repetitions) | Oversized relative to 0.05. |
-| N=300 null | Two-way firm–year 5% rejection rate | 0.127 (MCSE 0.011) | 0.111 (MCSE 0.007; 2,000 repetitions) | Substantially oversized with eight analysis years. |
-| N=300 null | Restricted firm wild-bootstrap 5% rejection rate | 0.067 (MCSE 0.014) | 0.055 (MCSE 0.009; 600 outer repetitions) | Closer to nominal, but still a calibrated diagnostic rather than a guarantee. |
-| N=300 full alternative | Firm-clustered 5% rejection rate | 0.241 (MCSE 0.014) | 0.234 (MCSE 0.009; 2,000 repetitions) | Modest power. |
-| N=500 full alternative | Firm-clustered 5% rejection rate | 0.407 (MCSE 0.028) | 0.412 (MCSE 0.020; 600 repetitions) | Larger cross-section raises power. |
-| 8/18/28 time clusters, null DGP | Two-way 5% rejection rate | — | 0.086 / 0.076 / 0.070 (MCSE 0.009 / 0.008 / 0.008; 1,000 repetitions each) | Longer time dimension improves but does not fully calibrate two-way inference in this DGP. |
-| Big Four selection-only ablation | Firm-clustered interaction rejection | — | 0.056 (MCSE 0.007; 1,000 repetitions) | Preserving selection while removing the direct variance role yields near-null firm-clustered rejection. |
+The round-two time grid shows that two-way null rejection depends jointly on the number of analysable time clusters, ESG persistence, and the ESG-dependent residual-variance mechanism. At 28 clusters the two-way rate ranges from 0.043 to 0.081 across the specified grid. The package therefore does not posit a universal “safe” time-cluster threshold.
 
 ## Repository layout
 
 ```text
-.
-├── config/
-│   └── dgp.yaml                       # Declared synthetic DGP and run parameters
-├── data/
-│   └── public/
-│       ├── synthetic_example_null.csv  # Small synthetic example; no real firms
-│       └── sec_metadata_manifest.csv   # URL/hash manifest, not raw SEC data
-├── docs/
-│   ├── DATA_SOURCES.md                 # Source and license guide
-│   ├── EXPERIMENT_REPORT.md            # Results and interpretation
-│   └── REPOSITORY_BOUNDARY.md          # Public/private release rules
-├── outputs/
-│   ├── figures/                        # Canonical publication-ready PNG figures
-│   ├── tables/                         # Canonical aggregate CSV result tables
-│   └── reviewer_diagnostics_pooled/    # Pooled Tables 8–9 and Figures 2–3
-├── src/
-│   ├── esg_monte_carlo.py              # DGP, estimation, diagnostics, and figures
-│   ├── run_reviewer_diagnostics.py     # Time-cluster and Big Four mechanism extensions
-│   ├── aggregate_reviewer_diagnostics.py # Correct independent-seed pooling
-│   ├── plot_pooled_reviewer_diagnostics.py # Pooled Figures 2–3
-│   ├── collect_sec_metadata.py         # Optional metadata tool; not used in reported analysis
-│   ├── compare_runs.py                 # Canonical independent-seed aggregation
-│   └── build_revised_manuscript.py     # Private manuscript builder; excluded from public release
-├── tests/
-│   ├── test_pipeline.py                # Deterministic pipeline and observation-flow checks
-│   └── benchmark_bootstrap.py          # Cached vs. legacy bootstrap equivalence benchmark
-├── requirements.txt
-├── .gitignore
-└── LICENSE
+config/dgp.yaml                                  # Single source of truth for synthetic DGP settings
+src/esg_monte_carlo.py                            # Synthetic DGP, two-stage estimators, covariance and bootstrap routines
+src/compare_runs.py                               # Main two-seed pooling and Figure 1 generation
+src/run_round2_diagnostics.py                     # Time, scale, availability, and first-stage-FE diagnostics
+src/aggregate_round2_diagnostics.py               # Replicate-level pooling for round-two diagnostics
+src/run_round2_big4_mechanism.py                  # Corrected-sample-flow Big Four mechanism ablation
+src/aggregate_round2_big4_mechanism.py            # Replicate-level pooling for Big Four ablation
+tests/test_pipeline.py                            # Core deterministic synthetic-pipeline checks
+tests/test_reviewer_revision.py                   # Public aggregate-artifact checks; private DOCX audit is opt-in
+data/public/synthetic_example_null.csv            # Synthetic schema example only
+outputs/final_run_round2_pooled/                  # Pooled main aggregate table and Figure 1
+outputs/round2_pooled/                            # Pooled time, scale, availability, and FE tables/figures
+outputs/round2_big4_pooled/                       # Pooled corrected Big Four ablation table/figure
+docs/REPOSITORY_BOUNDARY.md                       # Explicit public/private release boundary
 ```
 
-## Reproduce the canonical experiment
+## Environment
 
-Create an isolated environment, install the pinned dependencies, then run the test before running the full experiment.
+Python 3.11+ is recommended. Install package dependencies in an isolated environment:
 
 ```bash
-python3 -m venv .venv
-source .venv/bin/activate
-pip install --upgrade pip
-pip install -r requirements.txt
-python tests/test_pipeline.py
-python src/esg_monte_carlo.py \
-  --reps 1000 --sensitivity-reps 300 --bootstrap-reps 399 \
-  --output outputs/final_run_calibrated
-python src/esg_monte_carlo.py \
-  --seed 20260828 --reps 1000 --sensitivity-reps 300 --bootstrap-reps 399 \
-  --output outputs/validation_seed_20260828
-python src/compare_runs.py \
-  outputs/final_run_calibrated/tables/table_2_monte_carlo_operating_characteristics.csv \
-  outputs/validation_seed_20260828/tables/table_2_monte_carlo_operating_characteristics.csv \
-  outputs/final_run_calibrated/tables/table_4_independent_seed_crosscheck.csv
-
-# Reviewer-requested time-cluster and Big Four mechanism extensions
-python src/run_reviewer_diagnostics.py --reps 500 --year-grid 10 20 30 \
-  --seed 20260827 --output outputs/reviewer_diagnostics_seed_20260827
-python src/run_reviewer_diagnostics.py --reps 500 --year-grid 10 20 30 \
-  --seed 20260828 --output outputs/reviewer_diagnostics_seed_20260828
-python src/aggregate_reviewer_diagnostics.py \
-  outputs/reviewer_diagnostics_seed_20260827 \
-  outputs/reviewer_diagnostics_seed_20260828 \
-  --output outputs/reviewer_diagnostics_pooled
-python src/plot_pooled_reviewer_diagnostics.py \
-  --input outputs/reviewer_diagnostics_pooled \
-  --output outputs/reviewer_diagnostics_pooled/figures
+python3 -m pip install -r requirements.txt
 ```
 
-Expected execution time in the supplied Linux environment is about four minutes per complete seed run. Every invocation writes `manifest.json` containing the configuration hash, package versions, seeds, and run counts.
+## Reproduce a lightweight public smoke run
 
-## Data governance and source policy
+The public package includes pooled results to reproduce the reported tables without rerunning the full Monte Carlo design. The following produces a small synthetic run and runs deterministic tests:
 
-The current study has **no external empirical data dependency**. All analysis observations are generated locally from `config/dgp.yaml`, which is the single source of truth for every disclosed DGP parameter. The optional `src/collect_sec_metadata.py` utility is not invoked by any reported experiment, calibration, table, or figure. It is retained only as a separately documented future-extension utility; raw responses are deliberately excluded from the public repository. The SEC describes the underlying interface as providing filing history and XBRL facts in JSON without an API key [4].
+```bash
+python3 tests/test_pipeline.py
+python3 src/esg_monte_carlo.py \
+  --seed 20260827 \
+  --reps 3 \
+  --sensitivity-reps 2 \
+  --bootstrap-reps 19 \
+  --output outputs/public_smoke
+```
 
-ESG vendor data must not be silently substituted or redistributed. For example, LSEG reports broad ESG coverage but explicitly restricts systematic reproduction and redistribution without a license [5]. Raw CSMAR, Wind, Bloomberg, Refinitiv, MSCI, Sustainalytics, and similar commercial data belong in a controlled private environment. The repository documents the data dictionary and acquisition protocol but does not ship the licensed records.
+## Reproduce the complete reported synthetic runs
 
-| Asset | Public repository | Private repository / local controlled storage |
-|---|---:|---:|
-| Source code and configuration | Yes | Mirror allowed |
-| Synthetic example data and aggregated result tables | Yes | Mirror allowed |
-| Full simulation work files and internal audit logs | No | Yes |
-| Original and revised manuscript DOCX | No | Yes |
-| SEC raw API responses | No | Yes |
-| Licensed ESG/audit/financial data and `.env` files | Never | Local controlled storage only |
+The reported run uses independent master seeds `20260827` and `20260828`, 1,000 primary repetitions per seed, 300 sensitivity repetitions per seed, and 399 inner firm-level restricted wild draws. These commands are computationally intensive:
 
-## Methodological interpretation
+```bash
+python3 src/esg_monte_carlo.py --seed 20260827 --reps 1000 --sensitivity-reps 300 --bootstrap-reps 399 \
+  --output outputs/final_run_round2_seed_20260827
+python3 src/esg_monte_carlo.py --seed 20260828 --reps 1000 --sensitivity-reps 300 --bootstrap-reps 399 \
+  --output outputs/final_run_round2_seed_20260828
 
-The results are **operating characteristics**, not an SOTA leaderboard. Relevant ESG, audit-quality, and investment-efficiency studies use distinct populations and estimands, so it would be misleading to rank them by a common ‘best score.’ The accompanying paper instead includes a research-positioning table. The residual-based investment approach is connected to prior investment-efficiency research [6] [7], while current reviews document substantial heterogeneity in ESG–investment-efficiency and sustainability-assurance measurement practices [8] [9].
+python3 src/compare_runs.py \
+  outputs/final_run_round2_seed_20260827/tables/table_2_monte_carlo_operating_characteristics.csv \
+  outputs/final_run_round2_seed_20260828/tables/table_2_monte_carlo_operating_characteristics.csv \
+  outputs/final_run_round2_pooled/tables/table_6_independent_seed_crosscheck.csv \
+  --figure-output outputs/final_run_round2_pooled/figures/figure_1_primary_operating_characteristics_pooled.png
+```
+
+Run the round-two diagnostic grid and corrected Big Four ablation as follows:
+
+```bash
+for SEED in 20260827 20260828; do
+  python3 src/run_round2_diagnostics.py --seed "$SEED" --reps 500 --output "outputs/round2_seed_$SEED"
+  python3 src/run_round2_big4_mechanism.py --seed "$SEED" --reps 500 --output "outputs/round2_big4_seed_$SEED"
+done
+
+python3 src/aggregate_round2_diagnostics.py \
+  --seed-dirs outputs/round2_seed_20260827 outputs/round2_seed_20260828 \
+  --output outputs/round2_pooled
+python3 src/aggregate_round2_big4_mechanism.py \
+  --seed-dirs outputs/round2_big4_seed_20260827 outputs/round2_big4_seed_20260828 \
+  --output outputs/round2_big4_pooled
+
+python3 tests/test_reviewer_revision.py
+```
+
+## Statistical conventions
+
+Binary rejection-rate MCSEs are computed from all pooled outer repetitions as \(\sqrt{\hat p(1-\hat p)/R}\). Coefficient-mean MCSEs are calculated from the stored replicate-level coefficient distribution as its sample standard deviation divided by \(\sqrt{R}\). The firm-level wild-bootstrap routine is a restricted Rademacher **firm-cluster** bootstrap; it is not a multiway wild bootstrap.
+
+For the oracle DGP deviation \(u^*=\sigma(X)z\), with a standard-normal innovation independent of \(X\), \(E[\log|u^*|\mid X]=\log\sigma(X)+E[\log|z|]\). This explains the oracle scale mapping only under the stated DGP and exposure transformation. Estimated-residual coefficients may differ because of first-stage estimation, finite samples, fixed effects, standardization, and selective availability.
+
+## Data, license, and release boundary
+
+All reported observations are synthetic. The public release intentionally excludes manuscript DOCX/PDF files, full seed-level outputs, replicate-level rows, raw SEC files, restricted ESG data, credentials, and private review materials. See [`docs/REPOSITORY_BOUNDARY.md`](docs/REPOSITORY_BOUNDARY.md) for the exact whitelist, prohibited patterns, sync procedure, and required clean-clone verification.
+
+The source records discuss published research and provider pages only as literature/context. They do not license or distribute commercial ESG data and do not calibrate the simulation to a vendor database.
 
 ## Citation
 
-If this code is used, cite the accompanying paper after the author finalizes and archives the version of record. Until then, cite the repository commit hash and state that it contains synthetic-data simulation code only.
-
-## License
-
-The code and synthetic assets are released under the MIT License. Third-party source data and the manuscript are excluded from this license.
-
-## References
-
-[1] Cameron, A. C., Gelbach, J. B., & Miller, D. L. (2008). Bootstrap-based improvements for inference with clustered errors. *Review of Economics and Statistics*, 90(3), 414–427. [https://doi.org/10.1162/rest.90.3.414](https://doi.org/10.1162/rest.90.3.414)
-
-[2] Cameron, A. C., & Miller, D. L. (2015). A practitioner’s guide to cluster-robust inference. *Journal of Human Resources*, 50(2), 317–372. [https://doi.org/10.3368/jhr.50.2.317](https://doi.org/10.3368/jhr.50.2.317)
-
-[3] Hounyo, U., & Lin, J. (2026). Wild bootstrap inference with multiway clustering and serially correlated time effects. *Journal of Business & Economic Statistics*, 44(2), 601–612. [https://doi.org/10.1080/07350015.2025.2546454](https://doi.org/10.1080/07350015.2025.2546454)
-
-[4] U.S. Securities and Exchange Commission. (2025). *EDGAR application programming interfaces*. [https://www.sec.gov/search-filings/edgar-application-programming-interfaces](https://www.sec.gov/search-filings/edgar-application-programming-interfaces)
-
-[5] LSEG. (2026). *ESG Scores and Data*. [https://www.lseg.com/en/data-analytics/sustainable-finance/sustainability-ratings-and-data](https://www.lseg.com/en/data-analytics/sustainable-finance/sustainability-ratings-and-data)
-
-[6] Biddle, G. C., Hilary, G., & Verdi, R. S. (2009). How does financial reporting quality relate to investment efficiency? *Journal of Accounting and Economics*, 48(2–3), 112–131. [https://doi.org/10.1016/j.jacceco.2009.09.002](https://doi.org/10.1016/j.jacceco.2009.09.002)
-
-[7] Richardson, S. (2006). Over-investment of free cash flow. *Review of Accounting Studies*, 11, 159–189. [https://doi.org/10.1007/s11142-006-9012-3](https://doi.org/10.1007/s11142-006-9012-3)
-
-[8] Owino, F. J. O., Mathuva, D. M., & Mangena, M. (2026). Integrating environmental, social and governance disclosures factors in investment efficiency: A systematic literature review. *Journal of Applied Accounting Research*, 27(3), 574–593. [https://doi.org/10.1108/JAAR-03-2025-0099](https://doi.org/10.1108/JAAR-03-2025-0099)
-
-[9] Xu, H., Hay, D., & Harrison, J. (2026). Sustainability assurance quality: Indicators and consequences. *Accounting & Finance*, 66(1), 849–886. [https://doi.org/10.1111/acfi.70196](https://doi.org/10.1111/acfi.70196)
+If you use this package, cite the associated anonymous manuscript after its publication details are available. Until then, describe it as a synthetic Monte Carlo replication package and retain the methodological, non-empirical scope stated above.

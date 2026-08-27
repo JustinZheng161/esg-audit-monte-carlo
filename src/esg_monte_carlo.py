@@ -102,7 +102,10 @@ def fit_fe_ols(y: np.ndarray, x: np.ndarray, fe_groups: list[np.ndarray], firm: 
 
 
 def simulate_panel(seed: int, n_firms: int, effect_scale: float, cfg: dict,
-                   big4_variance_scale: float = 1.0) -> pd.DataFrame:
+                   big4_variance_scale: float = 1.0,
+                   esg_persistence_override: float | None = None,
+                   esg_effect_scale: float | None = None,
+                   interaction_effect_scale: float | None = None) -> pd.DataFrame:
     rng = np.random.default_rng(seed)
     years = np.asarray(cfg["project"]["years"], dtype=int)
     t_count = len(years)
@@ -113,8 +116,13 @@ def simulate_panel(seed: int, n_firms: int, effect_scale: float, cfg: dict,
     investment_cfg, sigma_cfg = dgp["investment_equation"], dgp["log_sigma_mapping"]
     base_sigma = float(sigma_cfg["base_sigma"])
     full = sigma_cfg["full_alternative"]
-    beta_esg = effect_scale * float(full["esg_log_sd"])
-    beta_inter = effect_scale * float(full["esg_big4_log_sd"]) * float(big4_variance_scale)
+    # Separate overrides permit a heteroskedastic interaction-null diagnostic and
+    # prevent the DGP log-SD parameters from being confused with second-stage betas.
+    main_scale = effect_scale if esg_effect_scale is None else float(esg_effect_scale)
+    interaction_scale = effect_scale if interaction_effect_scale is None else float(interaction_effect_scale)
+    beta_esg = main_scale * float(full["esg_log_sd"])
+    beta_inter = interaction_scale * float(full["esg_big4_log_sd"]) * float(big4_variance_scale)
+    esg_persistence = float(esg_cfg["persistence"]) if esg_persistence_override is None else float(esg_persistence_override)
 
     firm = np.arange(n_firms)
     industry = rng.integers(0, industries, size=n_firms)
@@ -131,7 +139,7 @@ def simulate_panel(seed: int, n_firms: int, effect_scale: float, cfg: dict,
                         + rng.normal(0, float(esg_cfg["initial_innovation_sd"]), n_firms), float(esg_cfg["lower"]), float(esg_cfg["upper"]))
     for t in range(1, t_count):
         esg[:, t] = np.clip(
-            float(esg_cfg["long_run_mean"]) + float(esg_cfg["persistence"]) * (esg[:, t - 1] - float(esg_cfg["long_run_mean"]))
+            float(esg_cfg["long_run_mean"]) + esg_persistence * (esg[:, t - 1] - float(esg_cfg["long_run_mean"]))
             + float(esg_cfg["quality_coefficient"]) * quality + float(esg_cfg["industry_coefficient"]) * (industry - (industries - 1) / 2.0) + float(esg_cfg["time_trend"]) * t
             + rng.normal(0, float(esg_cfg["innovation_sd"]), n_firms),
             float(esg_cfg["lower"]), float(esg_cfg["upper"]),
@@ -191,7 +199,8 @@ def simulate_panel(seed: int, n_firms: int, effect_scale: float, cfg: dict,
             rows.append({
                 "firm": int(firm[i]), "year": int(year), "industry": int(industry[i]),
                 "quality": float(quality[i]), "opportunity": float(opportunity[i]), "risk": float(risk[i]),
-                "network": int(network[i]), "firm_age": int(age0[i] + t), "esg": float(esg[i, t]),
+                "size_latent": float(size_latent[i]), "network": int(network[i]), "firm_age": int(age0[i] + t),
+                "esg": float(esg[i, t]), "esg_dgp_z": float(e_std[i, t]),
                 "big4": int(big4[i]), "q": float(q[i]), "growth": float(growth[i]), "cash": float(cash[i]),
                 "leverage": float(leverage[i]), "roa": float(roa[i]), "cfo_assets": float(cfo_assets[i]),
                 "investment": float(investment[i]), "true_deviation": float(true_deviation[i]),
@@ -199,33 +208,68 @@ def simulate_panel(seed: int, n_firms: int, effect_scale: float, cfg: dict,
         prior_investment = investment
         big4_previous = big4
     df = pd.DataFrame(rows).sort_values(["firm", "year"]).reset_index(drop=True)
-    df["investment_lag"] = df.groupby("firm")["investment"].shift(1)
+    # The DGP supplies a documented initial investment state, so the first-stage
+    # equation can legitimately use all firm-years rather than discarding year one.
+    df["investment_lag"] = df.groupby("firm")["investment"].shift(1).fillna(float(latent["initial_investment"]))
     df["esg_lag"] = df.groupby("firm")["esg"].shift(1)
+    df["esg_dgp_z_lag"] = df.groupby("firm")["esg_dgp_z"].shift(1)
     df["big4_lag"] = df.groupby("firm")["big4"].shift(1)
     df["esg_lead"] = df.groupby("firm")["esg"].shift(-1)
     return df
 
 
 def second_stage_data(df: pd.DataFrame, include_esg_first_stage: bool = False, missingness: bool = False,
-                      seed: int | None = None) -> pd.DataFrame:
-    use = df.dropna(subset=["investment_lag", "esg_lag", "big4_lag", "esg_lead"]).copy()
-    # First stage: expected investment, industry-by-year fixed effects.
+                      seed: int | None = None, availability: str = "complete",
+                      first_stage_fe: str = "industry_year", cfg: dict | None = None) -> pd.DataFrame:
+    # First-stage expected investment is fitted on the entire DGP panel. Lagged ESG
+    # and the lead placebo are second-stage requirements and must not silently reduce
+    # the first-stage sample. The optional ESG-first-stage sensitivity necessarily
+    # excludes only first-year rows because that additional regressor is unavailable.
+    first_df = df.copy()
     x_cols = ["growth", "cfo_assets", "q", "cash", "leverage", "firm_age", "investment_lag"]
     if include_esg_first_stage:
+        first_df = first_df.dropna(subset=["esg_lag"]).copy()
         x_cols.append("esg_lag")
-    y = use["investment"].to_numpy()
-    x = use[x_cols].to_numpy()
-    group = (use["industry"].astype(str) + "_" + use["year"].astype(str)).to_numpy()
-    first = fit_fe_ols(y, x, [group], use["firm"].to_numpy(), use["year"].to_numpy(), "firm")
-    use["expected_investment"] = y - first["residual"]
-    use["inefficiency"] = np.abs(first["residual"])
-    use["log_inefficiency"] = np.log(np.maximum(use["inefficiency"], 1e-8))
-    use["oracle_log_abs_deviation"] = np.log(np.maximum(np.abs(use["true_deviation"]), 1e-8))
+    y = first_df["investment"].to_numpy()
+    x = first_df[x_cols].to_numpy()
+    industry_year_first = (first_df["industry"].astype(str) + "_" + first_df["year"].astype(str)).to_numpy()
+    if first_stage_fe == "industry_year":
+        first_fe_groups = [industry_year_first]
+    elif first_stage_fe == "industry_plus_year":
+        first_fe_groups = [first_df["industry"].to_numpy(), first_df["year"].to_numpy()]
+    elif first_stage_fe == "none":
+        first_fe_groups = []
+    else:
+        raise ValueError(f"Unknown first-stage FE specification: {first_stage_fe}")
+    first = fit_fe_ols(y, x, first_fe_groups, first_df["firm"].to_numpy(), first_df["year"].to_numpy(), "firm")
+    first_df["first_stage_residual"] = first["residual"]
+    first_df["expected_investment"] = y - first["residual"]
+    first_df["inefficiency"] = np.abs(first["residual"])
+    first_df["log_inefficiency"] = np.log(np.maximum(first_df["inefficiency"], 1e-8))
+    first_df["oracle_log_abs_deviation"] = np.log(np.maximum(np.abs(first_df["true_deviation"]), 1e-8))
+    use = first_df.dropna(subset=["esg_lag", "big4_lag", "esg_lead"]).copy()
     use["industry_year"] = use["industry"].astype(str) + "_" + use["year"].astype(str)
-    if missingness:
+    if missingness and availability == "complete":
+        availability = "adverse_selective"
+    if availability != "complete":
+        if cfg is None:
+            raise ValueError("cfg is required for non-complete availability diagnostics")
+        availability_cfg = cfg["review_round2"]["selective_availability"]
         rng = np.random.default_rng(seed)
-        p_miss = sigmoid(-2.4 - 0.5 * use["quality"].to_numpy() + 0.45 * use["risk"].to_numpy())
-        use = use.loc[rng.uniform(size=len(use)) > p_miss].copy()
+        if availability == "adverse_selective":
+            params = availability_cfg["adverse_missing_logit"]
+            p_miss = sigmoid(float(params["intercept"]) + float(params["latent_quality_coefficient"]) * use["quality"].to_numpy()
+                             + float(params["risk_coefficient"]) * use["risk"].to_numpy())
+            keep = rng.uniform(size=len(use)) > p_miss
+        elif availability == "coverage_aligned":
+            params = availability_cfg["coverage_aligned_observation_logit"]
+            p_observed = sigmoid(float(params["intercept"]) + float(params["esg_z_coefficient"]) * use["esg_dgp_z_lag"].to_numpy()
+                                + float(params["latent_quality_coefficient"]) * use["quality"].to_numpy()
+                                + float(params["size_latent_coefficient"]) * use["size_latent"].to_numpy())
+            keep = rng.uniform(size=len(use)) < p_observed
+        else:
+            raise ValueError(f"Unknown availability diagnostic: {availability}")
+        use = use.loc[keep].copy()
     return use.reset_index(drop=True)
 
 
@@ -241,7 +285,8 @@ def circular_shift_by_firm(df: pd.DataFrame, column: str, seed: int) -> np.ndarr
 
 
 def fit_second_stage(use: pd.DataFrame, outcome: str = "log_inefficiency", exposure: str = "esg_lag",
-                     covariance: str = "firm", placebo_seed: int | None = None) -> dict:
+                     covariance: str = "firm", placebo_seed: int | None = None,
+                     standardize_exposure: bool = True) -> dict:
     local = use.copy()
     if exposure == "circular_esg":
         if placebo_seed is None:
@@ -249,9 +294,14 @@ def fit_second_stage(use: pd.DataFrame, outcome: str = "log_inefficiency", expos
         local["exposure"] = circular_shift_by_firm(local, "esg_lag", placebo_seed)
     elif exposure == "lead_esg":
         local["exposure"] = local["esg_lead"].to_numpy()
+    elif exposure == "dgp_esg_z_lag":
+        local["exposure"] = local["esg_dgp_z_lag"].to_numpy()
     else:
         local["exposure"] = local["esg_lag"].to_numpy()
-    local["exposure_z"] = (local["exposure"] - local["exposure"].mean()) / local["exposure"].std(ddof=0)
+    if standardize_exposure:
+        local["exposure_z"] = (local["exposure"] - local["exposure"].mean()) / local["exposure"].std(ddof=0)
+    else:
+        local["exposure_z"] = local["exposure"]
     local["interaction"] = local["exposure_z"] * local["big4_lag"]
     y = local[outcome].to_numpy()
     x = local[["exposure_z", "big4_lag", "interaction"]].to_numpy()
@@ -350,17 +400,29 @@ def make_figures(null_df: pd.DataFrame, alt_df: pd.DataFrame, summary: pd.DataFr
         fig.suptitle(f"{title}: distribution diagnostics", fontsize=12)
         fig.savefig(figure_dir / filename, dpi=600, bbox_inches="tight")
         plt.close(fig)
-    power = summary.loc[summary["effect_scale"] > 0].copy()
-    fig, ax = plt.subplots(figsize=(6.5, 4.0), constrained_layout=True)
-    for n, group in power.groupby("firms"):
-        group = group.sort_values("effect_scale")
-        ax.plot(group["effect_scale"], group["firm_rejection_5pct"], marker="o", label=f"N={n}")
-    ax.axhline(0.05, color="black", linestyle="--", linewidth=1, label="Nominal size")
-    ax.set_xlabel("Alternative-effect scale")
+    # Present both covariance estimators side-by-side. A line chart containing only
+    # firm-clustered values would visually suppress the central few-time-cluster diagnostic.
+    plot = summary.loc[~summary["scenario"].str.contains("wild bootstrap", case=False, na=False)].copy()
+    labels = []
+    firm_values, two_way_values = [], []
+    effect_label = {0.0: "Null", 0.5: "Half", 1.0: "Full"}
+    for firms in sorted(plot["firms"].unique()):
+        for effect in sorted(plot.loc[plot["firms"] == firms, "effect_scale"].unique()):
+            row = plot.loc[(plot["firms"] == firms) & (plot["effect_scale"] == effect)].iloc[0]
+            labels.append(f"N={int(firms)}\\n{effect_label[float(effect)]}")
+            firm_values.append(float(row["firm_rejection_5pct"]))
+            two_way_values.append(float(row["two_way_rejection_5pct"]))
+    x = np.arange(len(labels))
+    width = 0.38
+    fig, ax = plt.subplots(figsize=(9.0, 4.4), constrained_layout=True)
+    ax.bar(x - width / 2, firm_values, width, label="Firm-clustered", color="#4C78A8")
+    ax.bar(x + width / 2, two_way_values, width, label="Two-way firm–year", color="#E45756")
+    ax.axhline(0.05, color="black", linestyle="--", linewidth=1, label="Nominal 5% size")
+    ax.set_xticks(x, labels)
     ax.set_ylabel("Rejection probability at 5%")
-    ax.set_ylim(0, 1)
-    ax.legend(frameon=False)
-    ax.set_title("Power by sample size and effect scale")
+    ax.set_ylim(0, 0.50)
+    ax.legend(frameon=False, ncol=3, fontsize=8)
+    ax.set_title("Rejection probabilities by sample size, DGP effect scale, and covariance estimator")
     fig.savefig(figure_dir / "figure_1_power_curve.png", dpi=600, bbox_inches="tight")
     plt.close(fig)
 
@@ -439,7 +501,8 @@ def main() -> None:
         ("Raw absolute residual", base_use, "inefficiency"),
         ("Oracle log true deviation", base_use, "oracle_log_abs_deviation"),
         ("First stage includes lagged ESG", second_stage_data(alt_df, include_esg_first_stage=True), "log_inefficiency"),
-        ("MAR-like ESG missingness", second_stage_data(alt_df, missingness=True, seed=seed + 301), "log_inefficiency"),
+        ("Adverse selective-availability stress", second_stage_data(alt_df, availability="adverse_selective", seed=seed + 301, cfg=cfg), "log_inefficiency"),
+        ("Coverage-aligned selective-availability stress", second_stage_data(alt_df, availability="coverage_aligned", seed=seed + 302, cfg=cfg), "log_inefficiency"),
     ]:
         fit = fit_second_stage(data, outcome=outcome)
         robust_rows.append({"diagnostic": name, "n_obs": len(data), "interaction_coefficient": fit["beta"][2],

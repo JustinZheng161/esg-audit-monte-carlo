@@ -96,3 +96,26 @@ A second recommended scale-out patch, not required for the current N≤500 runs,
 | Big Four construct | Direct residual-variance interaction and the proxy limitation were not separately tested. | The DGP now accepts `big4_variance_scale`; Table 9/Figure 3 contrast direct-role and selection-only conditions. | Deterministic selection/ESG-stream equivalence test; two independent pooled runs. |
 | SEC metadata wording | Manuscript mentioned an unused company metadata snapshot. | Anonymous paper now states that no real-company financial, ESG, audit, regulatory, or commercial records enter analysis. | Data/code availability statements and public-boundary scan. |
 | Anonymous CRediT | Narrative statement included `manuscript editing assistance`. | Standard anonymized CRediT role statement only. | Anonymous-text scan and final DOCX review. |
+
+## 2026-08-27 — Round-two reviewer revision
+
+### Corrected implementation
+
+- Corrected the sample flow so the first-stage expected-investment equation is fitted on the full 3,000-row synthetic primary panel, using the documented initial investment state for the first lag. The common second-stage lag/lead protocol remains 2,400 rows.
+- Retired prior main and reviewer numerical claims that were generated before this first-stage correction. Reported primary results now reside under `outputs/final_run_round2_*` and the two-seed pooled directory.
+- Extended `compare_runs.py` to generate the pooled N=300 grouped-bar Figure 1 with separate firm-clustered and two-way firm–year bars and 95% Monte Carlo intervals.
+
+### New reviewer diagnostics
+
+- Added `run_round2_diagnostics.py` and `aggregate_round2_diagnostics.py`. They preserve replication-level results and pool binary rates from all outer repetitions; coefficient-mean MCSEs use the replication-level sample standard deviation divided by the square root of the pooled repetition count.
+- Added a time-structure grid varying 8/28 analysable time clusters, ESG persistence (0.25/0.60/0.95), and ESG-dependent residual-variance scale (0/1) under an interaction null.
+- Added an oracle/estimated-residual scale-mapping grid that distinguishes DGP \(\gamma_{INT}\) in log-SD units from second-stage \(\beta_3\) values on log absolute true-deviation or estimated-residual scales.
+- Replaced the former “MAR-like” label with adverse selective-availability stress and added a non-calibrated coverage-aligned synthetic sensitivity.
+- Added first-stage fixed-effect sensitivity for industry×year, industry+year, and no fixed effects, including oracle outcomes and reference-panel joint-F/partial-\(R^2\) diagnostics.
+- Added corrected-sample-flow Big Four mechanism ablation runner and aggregator. Both scenarios retain the Big Four logistic selection equation; the selection-only condition removes only the direct residual-variance role.
+
+### Manuscript and release documentation
+
+- Rebuilt `ESG_Audit_InvestmentEfficiency_round2_revised_anonymous.docx` from only corrected pooled outputs. The manuscript unifies terminology as “Big Four auditor indicator,” adds scale-mapping and residual-proxy limitations, conditions time-cluster claims on the DGP, and relocates research positioning to Appendix Table B1.
+- Added `RESPONSE_TO_REVIEWERS_ROUND2.md`, `ROUND2_RESULT_AND_FIGURE_CHECK.md`, and a private final-submission author-replacement checklist.
+- Updated the public README, repository boundary whitelist, and deterministic reviewer-revision test contract.

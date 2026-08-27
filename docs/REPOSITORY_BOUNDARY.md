@@ -4,58 +4,72 @@
 
 | Repository | Visibility | Purpose | Included assets | Explicit exclusions |
 |---|---|---|---|---|
-| `esg-audit-monte-carlo` | Public | Reproducible synthetic statistical diagnostics | Code, test suite, YAML configuration, synthetic example, aggregate tables, figures, source/ license documentation | Manuscript DOCX/PDF, raw SEC responses, full simulation output archives, commercial data, keys |
-| `esg-audit-monte-carlo-private` | Private | Author-controlled research record and full audit trail | Original/revised manuscripts, full output runs, internal audit notes, raw public-source snapshots, permitted internal metadata | API keys, plaintext credentials, unauthorized third-party data redistribution |
+| `esg-audit-monte-carlo` | Public | Reproduce the documented **synthetic** statistical diagnostics | DGP configuration; runtime code; deterministic tests; a small synthetic example; aggregate pooled tables and figures; source and boundary documentation | Manuscript DOCX/PDF; manuscript generator; full seed-level/repetition-level output; raw SEC files; restricted/vendor data; credentials |
+| `esg-audit-monte-carlo-private` | Private | Author-controlled research record and delivery archive | Public release plus anonymous manuscript, full synthetic outputs, review materials, rendering checks, and permitted internal audit artifacts | API keys, plaintext credentials, and unauthorized third-party data redistribution |
 
-## Sync algorithm
+> **Release principle.** “Data synchronization” does not mean publishing all local files. The public repository contains only the minimum synthetic inputs and aggregate evidence needed to reproduce the reported diagnostic claims. The private archive is also not a license override: raw or licensed third-party data may be retained only where storage is permitted.
 
-1. Generate all code and outputs in the private working tree.
-2. Run the deterministic tests and full experiment.
-3. Validate the result manifest, table schema, figure readability, and source registry.
-4. Copy only the whitelist below to the public release tree.
-5. Run a secret scan and an excluded-pattern scan on the public release tree.
-6. Commit and push the public and private repositories independently.
+## Public whitelist for the round-two release
 
-| Whitelist class | Public path | Reason |
+| Whitelist class | Public path(s) | Rationale |
 |---|---|---|
-| Experiment code | `src/esg_monte_carlo.py`, `src/collect_sec_metadata.py`, `src/compare_runs.py` | Required for replication |
-| Configuration | `config/dgp.yaml` | Makes all synthetic assumptions explicit |
-| Test | `tests/test_pipeline.py` | Enables basic reproducibility check |
-| Synthetic data | `data/public/synthetic_example_null.csv` | Demonstrates schema without real firms |
-| Public metadata | `data/public/sec_metadata_manifest.csv` | Source traceability without raw API files |
-| Results | `outputs/final_run_calibrated/tables/*.csv`, `outputs/final_run_calibrated/figures/*.png` | Documents canonical aggregate findings |
-| Documentation | `README.md`, `docs/*.md`, `requirements.txt`, `LICENSE`, `.gitignore` | Reuse, data governance, and provenance |
+| Core simulation and pooling code | `src/esg_monte_carlo.py`; `src/compare_runs.py`; `src/run_round2_diagnostics.py`; `src/aggregate_round2_diagnostics.py`; `src/run_round2_big4_mechanism.py`; `src/aggregate_round2_big4_mechanism.py` | Regenerates corrected-sample-flow main and reviewer diagnostics |
+| Configuration | `config/dgp.yaml` | Provides the sole executable description of synthetic assumptions |
+| Tests | `tests/test_pipeline.py`; `tests/test_reviewer_revision.py` | Checks synthetic sample flow, pooling rules, and aggregate artifact contract |
+| Synthetic example only | `data/public/synthetic_example_null.csv` | Demonstrates schema without real firms |
+| Pooled main evidence | `outputs/final_run_round2_pooled/tables/*.csv`; `outputs/final_run_round2_pooled/figures/figure_1_primary_operating_characteristics_pooled.png` | Corrected primary results and dual-inference visual |
+| Pooled second-round evidence | `outputs/round2_pooled/tables/*.csv`; `outputs/round2_pooled/figures/*.png`; `outputs/round2_pooled/manifest.json` | Time structure, scale mapping, availability, and first-stage FE diagnostics |
+| Pooled Big Four mechanism evidence | `outputs/round2_big4_pooled/tables/*.csv`; `outputs/round2_big4_pooled/figures/*.png`; `outputs/round2_big4_pooled/manifest.json` | Corrected-sample-flow selection-only ablation |
+| Documentation | `README.md`; `docs/*.md`; `requirements.txt`; `LICENSE`; `.gitignore` | Reproduction, provenance, and governance documentation |
 
-## Prohibited public patterns
+The private manuscript builder (`src/build_revised_manuscript.py`) is intentionally excluded from the public release because it embeds anonymous manuscript text and writes a private DOCX. It contains no reported real-company data but is not necessary to reproduce published numerical outputs.
+
+## Prohibited public files and patterns
 
 ```text
-*.docx, *.pdf, .env*, *token*, *secret*, *credential*, private/, data/raw/, data/restricted/,
-CSMAR/, Wind/, Bloomberg/, Refinitiv/, MSCI/, Sustainalytics/, AuditAnalytics/, Compustat/
+*.docx, *.pdf, .env*, *token*, *secret*, *credential*, private/, review_round2/,
+outputs/final_run_round2_seed_*/, outputs/round2_seed_*/, outputs/round2_big4_seed_*/,
+outputs/*/replication_level/, data/raw/, data/restricted/, CSMAR/, Wind/, Bloomberg/,
+Refinitiv/, MSCI/, Sustainalytics/, AuditAnalytics/, Compustat/
 ```
 
-The pattern list is conservative: names alone do not prove data sensitivity, but any match must receive an explicit manual review before publication.
+Names alone do not establish sensitivity. Nevertheless, every matching candidate is a release blocker until manually resolved. No raw SEC Company Facts snapshot is cited, analyzed, or released in this project.
 
-## Data synchronization rule
+## Sync procedure
 
-‘Data synchronization’ does **not** mean copying every local file to a public repository. The public repository synchronizes only synthetic examples, source manifests, and aggregate outputs. The private repository may mirror those files plus the author-controlled manuscript and full internal artifacts. Raw or licensed data remain local/controlled even in a private remote repository unless the owner’s license and organizational policy specifically allow remote storage.
+1. Run the deterministic tests and generate all final outputs in the protected working area.
+2. Validate manifests, table schemas, source wording, and figure readability. The manuscript DOCX/PDF check remains private.
+3. Populate a clean public checkout only with the whitelist paths above.
+4. Run boundary and credential scans on the public checkout. The scans must return no prohibited artifacts and no secrets.
+5. Commit and push public and private repositories independently.
+6. Clean-clone the public remote into a directory that is not adjacent to any private archive, then rerun public tests and a lightweight synthetic smoke run.
 
-## Operational command sequence
+## Reference sync command
 
 ```bash
-# Build a clean public release tree from the private working directory.
+# Run from the public checkout. Replace WORK with the protected working directory.
+WORK=/path/to/esg_audit/reproducibility
 rsync -a --delete \
   --include='README.md' --include='LICENSE' --include='requirements.txt' --include='.gitignore' \
-  --include='config/***' --include='src/esg_monte_carlo.py' \
-  --include='src/collect_sec_metadata.py' --include='src/compare_runs.py' \
-  --include='tests/***' --include='data/public/***' \
-  --include='outputs/final_run_calibrated/tables/***' \
-  --include='outputs/final_run_calibrated/figures/***' \
-  --include='docs/***' --exclude='*' \
-  /path/to/private-working-tree/ /path/to/esg-audit-monte-carlo/
+  --include='config/***' --include='src/esg_monte_carlo.py' --include='src/compare_runs.py' \
+  --include='src/run_round2_diagnostics.py' --include='src/aggregate_round2_diagnostics.py' \
+  --include='src/run_round2_big4_mechanism.py' --include='src/aggregate_round2_big4_mechanism.py' \
+  --include='tests/***' --include='data/public/synthetic_example_null.csv' --include='docs/***' \
+  --include='outputs/final_run_round2_pooled/tables/***' \
+  --include='outputs/final_run_round2_pooled/figures/figure_1_primary_operating_characteristics_pooled.png' \
+  --include='outputs/round2_pooled/tables/***' --include='outputs/round2_pooled/figures/***' \
+  --include='outputs/round2_pooled/manifest.json' \
+  --include='outputs/round2_big4_pooled/tables/***' --include='outputs/round2_big4_pooled/figures/***' \
+  --include='outputs/round2_big4_pooled/manifest.json' \
+  --exclude='*' "$WORK/" .
 
 # Required negative checks before public push.
-# Run a credential scanner approved by your organization, then run the file-boundary check.
-find . -type f \( -iname '*.docx' -o -iname '*.pdf' -o -path '*/data/raw/*' -o -path '*/data/restricted/*' \) -print
+find . -type f \( -iname '*.docx' -o -iname '*.pdf' -o -path '*/private/*' -o -path '*/review_round2/*' \
+  -o -path '*/data/raw/*' -o -path '*/data/restricted/*' -o -path '*/outputs/*seed*/*' \
+  -o -path '*/outputs/*/replication_level/*' \) -print
+
+grep -RInE --exclude-dir='.git' --exclude='*.png' --exclude='*.csv' \
+  '(OPENAI_API_KEY|api[_-]?key|secret|password|token)' .
 ```
 
-The file-boundary command should report **no public-release files**. Any unexpected file is a release blocker. The credential scan must also return clean before publication.
+The `find` command must have **no output**. The grep command needs manual review: terms used in explanatory documentation (for example, “credential scan”) are allowed, but any real secret or environment value is a release blocker.

@@ -48,14 +48,16 @@ def main() -> None:
     assert len(df) == 30 * len(cfg["project"]["years"])
     assert df["firm"].nunique() == 30
     assert df["year"].nunique() == len(cfg["project"]["years"])
-    assert df.groupby("firm")["investment_lag"].apply(lambda s: s.isna().sum()).eq(1).all()
+    # Initial investment is a documented DGP state, so the full first stage has no missing investment lag.
+    assert df.groupby("firm")["investment_lag"].apply(lambda s: s.isna().sum()).eq(0).all()
+    assert df.groupby("firm")["investment_lag"].first().eq(cfg["dgp"]["latent_variables"]["initial_investment"]).all()
 
     analysis = second_stage_data(df)
     assert len(analysis) == 30 * (len(cfg["project"]["years"]) - 2)
     assert analysis["year"].min() == cfg["project"]["years"][1]
     assert analysis["year"].max() == cfg["project"]["years"][-2]
     assert sorted(analysis["year"].unique().tolist()) == cfg["estimation"]["analysis_years"]
-    assert np.isfinite(analysis[["inefficiency", "log_inefficiency", "esg_lag"]].to_numpy()).all()
+    assert np.isfinite(analysis[["inefficiency", "log_inefficiency", "esg_lag", "first_stage_residual", "esg_dgp_z_lag"]].to_numpy()).all()
     assert mcse(0.05, 1000) == np.sqrt(0.05 * 0.95 / 1000)
 
     # The mechanism ablation preserves selection/ESG streams but removes only the

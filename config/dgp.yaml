@@ -27,7 +27,7 @@ estimation:
 
 robustness:
   include_lagged_esg_in_first_stage: true
-  missingness_stress_test: "MAR-like ESG missingness increasing with low latent quality and high risk; analyses use complete cases"
+  missingness_stress_test: "Adverse synthetic selective-availability stress increasing with low latent quality and high risk; not MAR and not empirically calibrated; analyses use complete cases"
   outcomes: [log_absolute_residual, raw_absolute_residual, oracle_log_true_deviation]
 
 publication:
@@ -118,3 +118,29 @@ dgp:
     full_alternative:
       esg_log_sd: -0.10
       esg_big4_log_sd: -0.12
+
+review_round2:
+  extension_repetitions_per_seed: 500
+  extension_seeds: [20260827, 20260828]
+  mcse_interval_multiplier: 1.96
+  time_structure:
+    # Values are DGP sensitivity settings, not estimates of real ESG persistence.
+    esg_persistence_values: [0.25, 0.60, 0.95]
+    residual_variance_esg_scales: [0.0, 1.0]
+    analysis_time_clusters: [8, 28]
+  scale_mapping:
+    firm_counts: [100, 300]
+    effect_scales: [0.0, 0.5, 1.0]
+  selective_availability:
+    # Neither mechanism is empirically calibrated. Both are synthetic stress designs.
+    adverse_missing_logit:
+      intercept: -2.40
+      latent_quality_coefficient: -0.50
+      risk_coefficient: 0.45
+    coverage_aligned_observation_logit:
+      intercept: 1.80
+      esg_z_coefficient: 0.40
+      latent_quality_coefficient: 0.35
+      size_latent_coefficient: 0.35
+  first_stage_fe_sensitivity:
+    specifications: [industry_year, industry_plus_year, none]

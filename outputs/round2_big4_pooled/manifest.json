@@ -1,0 +1,11 @@
+{
+  "master_seeds": [
+    20260827,
+    20260828
+  ],
+  "pooling_rule": {
+    "binary_rates": "recomputed from all replicate-level p-values; MCSE=sqrt(p*(1-p)/R)",
+    "coefficient_means": "mean over all replicate-level coefficients; MCSE=sample_sd/sqrt(R)"
+  },
+  "scope": "Synthetic DGP only; both scenarios retain the Big Four selection equation. No real-company data are used, calibrated, or implied."
+}
