@@ -102,7 +102,7 @@ A second recommended scale-out patch, not required for the current N≤500 runs,
 ### Corrected implementation
 
 - Corrected the sample flow so the first-stage expected-investment equation is fitted on the full 3,000-row synthetic primary panel, using the documented initial investment state for the first lag. The common second-stage lag/lead protocol remains 2,400 rows.
-- Retired prior main and reviewer numerical claims that were generated before this first-stage correction. Reported primary results now reside under `outputs/final-run_round2_*` and the two-seed pooled directory.
+- Retired prior main and reviewer numerical claims that were generated before this first-stage correction. Reported primary results now reside under `outputs/final-run-round2-*` and the two-seed pooled directory.
 - Extended `compare-runs.py` to generate the pooled N=300 grouped-bar Figure 1 with separate firm-clustered and two-way firm–year bars and 95% Monte Carlo intervals.
 
 ### New reviewer diagnostics

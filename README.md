@@ -32,17 +32,18 @@ src/run-round2-diagnostics.py                     # Time, scale, availability, a
 src/aggregate-round2-diagnostics.py               # Replicate-level pooling for round-two diagnostics
 src/run-round2-big4-mechanism.py                  # Corrected-sample-flow Big Four mechanism ablation
 src/aggregate-round2-big4-mechanism.py            # Replicate-level pooling for Big Four ablation
-src/export-publication-figures.py                   # Nature-style PDF/SVG/PNG/TIFF export from public aggregate tables
-tests/test-publication-figure-exports.py             # Source-to-asset, SVG-editability, format and DPI checks
+src/export-publication-figures.py                  # Nature-style PDF/SVG/PNG/TIFF export from public aggregate tables
+tests/test-publication-figure-exports.py            # Source-to-asset, SVG-editability, format and DPI checks
 tests/test-pipeline.py                            # Core deterministic synthetic-pipeline checks
 tests/test-reviewer-revision.py                   # Public aggregate-artifact checks; private DOCX audit is opt-in
 data/public/synthetic-example-null.csv            # Synthetic schema example only
 outputs/final-run-round2-pooled/                  # Pooled main aggregate table and Figure 1
 outputs/round2-pooled/                            # Pooled time, scale, availability, and FE tables/figures
 outputs/round2-big4-pooled/                       # Pooled corrected Big Four ablation table/figure
-outputs/publication-figures/                        # Nature-style Figure 1–5 PDF, SVG, PNG, TIFF and source-hash manifest
-docs/publication-figure-specification.md            # Nature-style formats, provenance, interval convention and export command
-docs/repository-boundary.md                       # Explicit public/private release boundary
+outputs/publication-figures/                       # Nature-style Figure 1–5 PDF, SVG, PNG, TIFF and source-hash manifest
+docs/public-data-and-artifact-catalog.md           # Complete safe public-data, output and source-file index
+docs/publication-figure-specification.md           # Nature-style formats, provenance, interval convention and export command
+docs/repository-boundary.md                         # Explicit public/private release boundary
 ```
 
 ## Environment
@@ -64,7 +65,7 @@ python3 src/esg-monte-carlo.py \
   --reps 3 \
   --sensitivity-reps 2 \
   --bootstrap-reps 19 \
-  --output outputs/public_smoke
+  --output outputs/public-smoke
 ```
 
 ## Reproduce the complete reported synthetic runs
@@ -88,8 +89,8 @@ Run the round-two diagnostic grid and corrected Big Four ablation as follows:
 
 ```bash
 for SEED in 20260827 20260828; do
-  python3 src/run-round2-diagnostics.py --seed "$SEED" --reps 500 --output "outputs/round2_seed_$SEED"
-  python3 src/run-round2-big4-mechanism.py --seed "$SEED" --reps 500 --output "outputs/round2_big4_seed_$SEED"
+  python3 src/run-round2-diagnostics.py --seed "$SEED" --reps 500 --output "outputs/round2-seed-$SEED"
+  python3 src/run-round2-big4-mechanism.py --seed "$SEED" --reps 500 --output "outputs/round2-big4-seed-$SEED"
 done
 
 python3 src/aggregate-round2-diagnostics.py \
@@ -129,7 +130,7 @@ All tracked file and directory names follow lowercase kebab-case and avoid under
 
 ## Data, license, and release boundary
 
-All reported observations are synthetic. The public release intentionally excludes manuscript DOCX/PDF files, full seed-level outputs, replicate-level rows, raw SEC files, restricted ESG data, credentials, and private review materials. See [`docs/repository-boundary.md`](docs/repository-boundary.md) for the exact whitelist, prohibited patterns, sync procedure, and required clean-clone verification.
+All reported observations are synthetic. The public release includes all safe synthetic examples, released aggregate result tables, publication artwork, manifests, code, tests, and documentation. It intentionally excludes manuscript DOCX/PDF files, full seed-level outputs, replicate-level rows, raw SEC files, restricted ESG data, credentials, and private review materials. See [`docs/public-data-and-artifact-catalog.md`](docs/public-data-and-artifact-catalog.md) for the public release index and [`docs/repository-boundary.md`](docs/repository-boundary.md) for the exact whitelist, prohibited patterns, sync procedure, and required clean-clone verification.
 
 The source records discuss published research and provider pages only as literature/context. They do not license or distribute commercial ESG data and do not calibrate the simulation to a vendor database.
 

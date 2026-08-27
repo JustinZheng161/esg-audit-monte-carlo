@@ -177,8 +177,8 @@ data/private/
 data/restricted/
 !data/public/
 !data/public/*.csv
-outputs/smoke_test*/
-outputs/validation_seed_*/
+outputs/smoke-test*/
+outputs/validation-seed-*/
 outputs/**/*.parquet
 outputs/**/*.pkl
 outputs/**/*.npy

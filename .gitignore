@@ -36,9 +36,9 @@ data/restricted/
 !data/public/*.csv
 
 # Large or reproducible-on-demand artifacts
-outputs/smoke_test*/
-outputs/validation_seed_*/
-outputs/full_run*.log
+outputs/smoke-test*/
+outputs/validation-seed-*/
+outputs/full-run*.log
 outputs/logs/
 outputs/**/*.parquet
 outputs/**/*.pkl
