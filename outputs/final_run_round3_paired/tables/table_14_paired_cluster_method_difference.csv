@@ -1,0 +1,4 @@
+scenario,firms,effect_scale,independent_master_seeds,combined_outer_repetitions,firm_rejection_5pct,two_way_rejection_5pct,two_way_minus_firm,paired_difference_mcse,paired_difference_ci95_low,paired_difference_ci95_high,both_reject_count,firm_only_reject_count,two_way_only_reject_count,neither_reject_count
+Null,300,0.0,2,2000,0.064,0.1035,0.0395,0.0055213329512699555,0.02867818741551089,0.05032181258448911,105,23,102,1770
+Half alternative,300,0.5,2,2000,0.1155,0.1585,0.043,0.006172078035284131,0.0309027270508431,0.055097272949156895,196,35,121,1648
+Full alternative,300,1.0,2,2000,0.246,0.287,0.041,0.007154375762166335,0.026977423506153987,0.055022576493846016,429,63,145,1363
