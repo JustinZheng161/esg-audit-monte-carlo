@@ -13,13 +13,14 @@
 
 | Whitelist class | Public path(s) | Rationale |
 |---|---|---|
-| Core simulation and pooling code | `src/esg-monte-carlo.py`; `src/compare-runs.py`; `src/run-round2-diagnostics.py`; `src/aggregate-round2-diagnostics.py`; `src/run-round2-big4-mechanism.py`; `src/aggregate-round2-big4-mechanism.py` | Regenerates corrected-sample-flow main and reviewer diagnostics |
+| Core simulation and pooling code | `src/esg-monte-carlo.py`; `src/compare-runs.py`; `src/run-round2-diagnostics.py`; `src/aggregate-round2-diagnostics.py`; `src/run-round2-big4-mechanism.py`; `src/aggregate-round2-big4-mechanism.py`; `src/export-publication-figures.py` | Regenerates corrected-sample-flow diagnostics and publication-grade figures from checked aggregate tables |
 | Configuration | `config/dgp.yaml` | Provides the sole executable description of synthetic assumptions |
 | Tests | `tests/test-pipeline.py`; `tests/test-reviewer-revision.py` | Checks synthetic sample flow, pooling rules, and aggregate artifact contract |
 | Synthetic example only | `data/public/synthetic-example-null.csv` | Demonstrates schema without real firms |
 | Pooled main evidence | `outputs/final-run-round2-pooled/tables/*.csv`; `outputs/final-run-round2-pooled/figures/figure-1-primary-operating-characteristics-pooled.png` | Corrected primary results and dual-inference visual |
 | Pooled second-round evidence | `outputs/round2-pooled/tables/*.csv`; `outputs/round2-pooled/figures/*.png`; `outputs/round2-pooled/manifest.json` | Time structure, scale mapping, availability, and first-stage FE diagnostics |
 | Pooled Big Four mechanism evidence | `outputs/round2-big4-pooled/tables/*.csv`; `outputs/round2-big4-pooled/figures/*.png`; `outputs/round2-big4-pooled/manifest.json` | Corrected-sample-flow selection-only ablation |
+| Publication figure package | `outputs/publication-figures/*.pdf`; `outputs/publication-figures/*.png`; `outputs/publication-figures/*.tiff` | Vector PDF and 600-dpi raster versions of Figures 1–5 generated only from public aggregate tables |
 | Documentation | `README.md`; `docs/*.md`; `requirements.txt`; `LICENSE`; `.gitignore` | Reproduction, provenance, and governance documentation |
 
 The private manuscript builder (`src/build-revised-manuscript.py`) is intentionally excluded from the public release because it embeds anonymous manuscript text and writes a private DOCX. It contains no reported real-company data but is not necessary to reproduce published numerical outputs.
@@ -27,8 +28,8 @@ The private manuscript builder (`src/build-revised-manuscript.py`) is intentiona
 ## Prohibited public files and patterns
 
 ```text
-*.docx, *.pdf, .env*, *token*, *secret*, *credential*, private/, review-round2/,
-outputs/final-run_round2_seed_*/, outputs/round2_seed_*/, outputs/round2_big4_seed_*/,
+*.docx, manuscript/*.pdf, .env*, *token*, *secret*, *credential*, private/, review-round2/,
+outputs/final-run-round2-seed-*/, outputs/round2-seed-*/, outputs/round2-big4-seed-*/,
 outputs/*/replication-level/, data/raw/, data/restricted/, CSMAR/, Wind/, Bloomberg/,
 Refinitiv/, MSCI/, Sustainalytics/, AuditAnalytics/, Compustat/
 ```
@@ -48,24 +49,26 @@ Names alone do not establish sensitivity. Nevertheless, every matching candidate
 
 ```bash
 # Run from the public checkout. Replace WORK with the protected working directory.
-WORK=/path/to/esg_audit/reproducibility
+WORK=/path/to/esg-audit/reproducibility
 rsync -a --delete \
   --include='README.md' --include='LICENSE' --include='requirements.txt' --include='.gitignore' \
   --include='config/***' --include='src/esg-monte-carlo.py' --include='src/compare-runs.py' \
   --include='src/run-round2-diagnostics.py' --include='src/aggregate-round2-diagnostics.py' \
   --include='src/run-round2-big4-mechanism.py' --include='src/aggregate-round2-big4-mechanism.py' \
-  --include='tests/***' --include='data/public/synthetic-example-null.csv' --include='docs/***' \
+  --include='src/export-publication-figures.py' --include='tests/***' --include='data/public/synthetic-example-null.csv' --include='docs/***' \
   --include='outputs/final-run-round2-pooled/tables/***' \
   --include='outputs/final-run-round2-pooled/figures/figure-1-primary-operating-characteristics-pooled.png' \
   --include='outputs/round2-pooled/tables/***' --include='outputs/round2-pooled/figures/***' \
   --include='outputs/round2-pooled/manifest.json' \
   --include='outputs/round2-big4-pooled/tables/***' --include='outputs/round2-big4-pooled/figures/***' \
   --include='outputs/round2-big4-pooled/manifest.json' \
+  --include='outputs/publication-figures/***' \
   --exclude='*' "$WORK/" .
 
 # Required negative checks before public push.
-find . -type f \( -iname '*.docx' -o -iname '*.pdf' -o -path '*/private/*' -o -path '*/review-round2/*' \
-  -o -path '*/data/raw/*' -o -path '*/data/restricted/*' -o -path '*/outputs/*seed*/*' \
+find . -type f \( -iname '*.docx' -o \( -iname '*.pdf' ! -path './outputs/publication-figures/*.pdf' \) \
+  -o -path '*/private/*' -o -path '*/review-round2/*' -o -path '*/data/raw/*' \
+  -o -path '*/data/restricted/*' -o -path '*/outputs/*seed*/*' \
   -o -path '*/outputs/*/replication-level/*' \) -print
 
 grep -RInE --exclude-dir='.git' --exclude='*.png' --exclude='*.csv' \

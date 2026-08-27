@@ -9,7 +9,7 @@ This repository reproduces a **synthetic-data Monte Carlo diagnostic** for a two
 | Topic | Earlier implementation | Corrected round-two implementation |
 |---|---|---|
 | First-stage sample | The first stage was inadvertently fitted after second-stage lag/lead exclusions. | The first-stage expected-investment equation is fitted on the full **3,000-row** synthetic panel. The second stage then uses **2,400** lag/lead-valid rows. |
-| Main evidence | Prior output paths reflected the former sample-flow implementation. | Reported primary results use `outputs/final-run_round2_*` and the two-seed pooled table. |
+| Main evidence | Prior output paths reflected the former sample-flow implementation. | Reported primary results use `outputs/final-run-round2-*` and the two-seed pooled table. |
 | Scale interpretation | The DGP log-SD interaction and log-absolute-residual coefficient were reported without an oracle mapping. | An oracle-versus-estimated-residual scale-mapping simulation distinguishes \(\gamma_{INT}\) from \(\beta_3\). |
 | Availability | A single “MAR-like” label was used. | Complete, adverse selective-availability, and non-calibrated coverage-aligned synthetic stresses are reported. |
 | First-stage FE | Overlap was discussed but not quantified across specifications. | Industry×year, industry+year, and no-first-stage-FE specifications report estimated-residual and oracle outcomes. |
@@ -32,12 +32,15 @@ src/run-round2-diagnostics.py                     # Time, scale, availability, a
 src/aggregate-round2-diagnostics.py               # Replicate-level pooling for round-two diagnostics
 src/run-round2-big4-mechanism.py                  # Corrected-sample-flow Big Four mechanism ablation
 src/aggregate-round2-big4-mechanism.py            # Replicate-level pooling for Big Four ablation
+src/export-publication-figures.py                   # Vector PDF and 600-dpi PNG/TIFF export from public aggregate tables
 tests/test-pipeline.py                            # Core deterministic synthetic-pipeline checks
 tests/test-reviewer-revision.py                   # Public aggregate-artifact checks; private DOCX audit is opt-in
 data/public/synthetic-example-null.csv            # Synthetic schema example only
 outputs/final-run-round2-pooled/                  # Pooled main aggregate table and Figure 1
 outputs/round2-pooled/                            # Pooled time, scale, availability, and FE tables/figures
 outputs/round2-big4-pooled/                       # Pooled corrected Big Four ablation table/figure
+outputs/publication-figures/                        # Publication-grade Figure 1–5 PDF, PNG, and TIFF package
+docs/publication-figure-specification.md            # Figure formats, interval convention, and export command
 docs/repository-boundary.md                       # Explicit public/private release boundary
 ```
 
@@ -107,6 +110,16 @@ For the oracle DGP deviation \(u^*=\sigma(X)z\), with a standard-normal innovati
 ## Benchmark positioning and extension protocol
 
 This is a **synthetic statistical diagnostic**, not a machine-learning benchmark. It therefore does not claim a state-of-the-art score or compare its rejection rates with ESG text-classification, question-answering, rating, or empirical-association results. The task definition, three scope-qualified ESG resources, non-comparable related-work table, internal calibration gaps, tested code optimizations, planned ablations, fixed comparison settings, future data-path recommendations, release templates, and physical delivery checklist are documented in [`docs/benchmark-and-experiment-protocol.md`](docs/benchmark-and-experiment-protocol.md). The directly paired firm-versus-two-way comparison—its joint-replication definition, MCSE, interval, public aggregate table, figure, and private-record boundary—is documented in [`docs/paired-cluster-diagnostic.md`](docs/paired-cluster-diagnostic.md).
+
+## Publication-grade figures
+
+The technical artwork package is generated only from the released aggregate synthetic tables. It supplies vector PDF plus 600-dpi PNG and TIFF versions, complete tick labels, 10-pt base text, and a consistent ±1.96×MCSE interval convention. Figure 2 intentionally displays no uncertainty bar for the fixed DGP parameter `γ_INT`. Regenerate the package with:
+
+```bash
+python3 src/export-publication-figures.py
+```
+
+See [`docs/publication-figure-specification.md`](docs/publication-figure-specification.md) for source-table provenance, figure-specific interpretation, and public-release limits.
 
 ## Repository naming
 
