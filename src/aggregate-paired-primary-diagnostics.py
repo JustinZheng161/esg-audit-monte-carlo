@@ -44,15 +44,15 @@ def main() -> None:
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
 
-    frames = [pd.read_csv(directory / "replication_level" / "primary_paired_replicates.csv") for directory in args.seed_dirs]
+    frames = [pd.read_csv(directory / "replication-level" / "primary-paired-replicates.csv") for directory in args.seed_dirs]
     pooled = pd.concat(frames, ignore_index=True)
     expected = ["Null", "Half alternative", "Full alternative"]
     summaries = [paired_summary(pooled.loc[pooled["scenario"] == scenario].copy()) for scenario in expected]
     table = pd.DataFrame(summaries)
-    destination = args.output / "tables" / "table_14_paired_cluster_method_difference.csv"
+    destination = args.output / "tables" / "table-14-paired-cluster-method-difference.csv"
     destination.parent.mkdir(parents=True, exist_ok=True)
     table.to_csv(destination, index=False)
-    (args.output / "manifest_paired_aggregate.json").write_text(json.dumps({
+    (args.output / "manifest-paired-aggregate.json").write_text(json.dumps({
         "source_seed_dirs": [str(path) for path in args.seed_dirs],
         "paired_mcse": "sample standard deviation of I(two_way reject) - I(firm reject), divided by sqrt(combined outer repetitions)",
         "ci": "normal approximation difference ± 1.96 * paired_difference_mcse",

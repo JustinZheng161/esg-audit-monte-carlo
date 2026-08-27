@@ -1,6 +1,7 @@
 """Unit tests for paired firm-versus-two-way rejection diagnostics."""
 from __future__ import annotations
 
+import importlib
 import sys
 from pathlib import Path
 
@@ -8,7 +9,7 @@ import pandas as pd
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
-from aggregate_paired_primary_diagnostics import paired_summary  # noqa: E402
+paired_summary = importlib.import_module("aggregate-paired-primary-diagnostics").paired_summary
 
 
 def main() -> None:

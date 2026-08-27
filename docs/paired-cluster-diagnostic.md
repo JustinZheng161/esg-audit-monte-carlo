@@ -22,7 +22,7 @@ MCSE(\bar D_s)=sd(D_{sr})/\sqrt{R}, \qquad \bar D_s \pm 1.96\,MCSE(\bar D_s).
 
 ## 当前复算结果
 
-两个独立 master seeds（20260827、20260828）各运行 1,000 次，因而每一主情景合并 \(R=2,000\) 次外层重复。聚合结果位于 [`outputs/final_run_round3_paired/tables/table_14_paired_cluster_method_difference.csv`](../outputs/final_run_round3_paired/tables/table_14_paired_cluster_method_difference.csv)，图形位于 [`outputs/final_run_round3_paired/figures/figure_6_paired_cluster_method_difference.png`](../outputs/final_run_round3_paired/figures/figure_6_paired_cluster_method_difference.png)。
+两个独立 master seeds（20260827、20260828）各运行 1,000 次，因而每一主情景合并 \(R=2,000\) 次外层重复。聚合结果位于 [`outputs/final-run-round3-paired/tables/table-14-paired-cluster-method-difference.csv`](../outputs/final-run-round3-paired/tables/table-14-paired-cluster-method-difference.csv)，图形位于 [`outputs/final-run-round3-paired/figures/figure-6-paired-cluster-method-difference.png`](../outputs/final-run-round3-paired/figures/figure-6-paired-cluster-method-difference.png)。
 
 | 情景 | Firm rate | Two-way rate | Two-way − firm | 配对 MCSE | 95% MC interval |
 |---|---:|---:|---:|---:|---:|
@@ -38,22 +38,22 @@ MCSE(\bar D_s)=sd(D_{sr})/\sqrt{R}, \qquad \bar D_s \pm 1.96\,MCSE(\bar D_s).
 
 ```bash
 # 在公开仓库根目录；每个 seed 运行一次，输出必须指向私有目录。
-python3 src/run_paired_primary_diagnostics.py \
-  --seed 20260827 --reps 1000 --output /private/seed_20260827
-python3 src/run_paired_primary_diagnostics.py \
-  --seed 20260828 --reps 1000 --output /private/seed_20260828
+python3 src/run-paired-primary-diagnostics.py \
+  --seed 20260827 --reps 1000 --output /private/seed-20260827
+python3 src/run-paired-primary-diagnostics.py \
+  --seed 20260828 --reps 1000 --output /private/seed-20260828
 
 # 从两个私有 seed 目录生成可公开的聚合表。
-python3 src/aggregate_paired_primary_diagnostics.py \
-  --seed-dirs /private/seed_20260827 /private/seed_20260828 \
-  --output /public-safe/paired_primary
+python3 src/aggregate-paired-primary-diagnostics.py \
+  --seed-dirs /private/seed-20260827 /private/seed-20260828 \
+  --output /public-safe/paired-primary
 
-python3 src/plot_paired_primary_diagnostics.py \
-  --table /public-safe/paired_primary/tables/table_14_paired_cluster_method_difference.csv \
-  --output /public-safe/paired_primary/figures/figure_6_paired_cluster_method_difference.png
+python3 src/plot-paired-primary-diagnostics.py \
+  --table /public-safe/paired-primary/tables/table-14-paired-cluster-method-difference.csv \
+  --output /public-safe/paired-primary/figures/figure-6-paired-cluster-method-difference.png
 ```
 
-运行 `python3 tests/test_paired_primary_diagnostics.py` 可验证配对差异、联合 MCSE、区间和四格计数的计算契约。
+运行 `python3 tests/test-paired-primary-diagnostics.py` 可验证配对差异、联合 MCSE、区间和四格计数的计算契约。
 
 ## 方法学背景
 

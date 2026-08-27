@@ -57,7 +57,7 @@ Google Scholar 检索结果、arXiv 的 ESG 基准论文与 Papers with Code 入
 
 ### 5.2 补丁 A：复用二阶段 FE 设计
 
-**替换文件：** `src/esg_monte_carlo.py`、`src/run_round2_diagnostics.py`、`tests/test_pipeline.py`。新增 `PreparedSecondStage`、`prepare_second_stage()` 与 `fit_second_stage_prepared()`：固定的回归量设计只被投影一次；每个结果变量仍独立进行固定效应残差化。该重构保持 Frisch–Waugh–Lovell 的估计逻辑，并避免把 outcome 投影错误地在不同结果变量间复用。高维固定效应计算的可扩展性动机与文献中的迭代 FE 估计工作一致 [7] [8]。
+**替换文件：** `src/esg-monte-carlo.py`、`src/run-round2-diagnostics.py`、`tests/test-pipeline.py`。新增 `PreparedSecondStage`、`prepare_second_stage()` 与 `fit_second_stage_prepared()`：固定的回归量设计只被投影一次；每个结果变量仍独立进行固定效应残差化。该重构保持 Frisch–Waugh–Lovell 的估计逻辑，并避免把 outcome 投影错误地在不同结果变量间复用。高维固定效应计算的可扩展性动机与文献中的迭代 FE 估计工作一致 [7] [8]。
 
 | 对象 | 修改前 | 修改后 | 不变量 |
 |---|---|---|---|
@@ -68,7 +68,7 @@ Google Scholar 检索结果、arXiv 的 ESG 基准论文与 Papers with Code 入
 
 ### 5.3 补丁 B：批量受限 wild cluster bootstrap
 
-**替换文件：** `src/esg_monte_carlo.py`、`tests/test_pipeline.py`。`restricted_wild_cluster_bootstrap()` 新增 `batch_size=64`，预先固定受限模型、bread、CR1 修正和 cluster-membership 矩阵；随后按确定性批次生成 Rademacher 权重并以 `einsum` 汇总 score。限制、随机种子、有限样本修正和极端统计量判定均保持不变。快速 wild bootstrap 的此类固定结构复用与 Roodman 等的计算论证一致 [9]。
+**替换文件：** `src/esg-monte-carlo.py`、`tests/test-pipeline.py`。`restricted_wild_cluster_bootstrap()` 新增 `batch_size=64`，预先固定受限模型、bread、CR1 修正和 cluster-membership 矩阵；随后按确定性批次生成 Rademacher 权重并以 `einsum` 汇总 score。限制、随机种子、有限样本修正和极端统计量判定均保持不变。快速 wild bootstrap 的此类固定结构复用与 Roodman 等的计算论证一致 [9]。
 
 | 对象 | 修改前 | 修改后 | 不变量 |
 |---|---|---|---|
@@ -199,9 +199,9 @@ git commit -m "chore: initialize reproducible synthetic package"
 gh repo create <owner>/<repo> --private --source=. --remote=origin --push
 
 # 每次公开发布前：测试、边界扫描、提交与推送。
-python3 tests/test_pipeline.py
-python3 tests/test_reviewer_revision.py
-git grep -nEi '(credential|api[_-]?key|secret|token|BEGIN [A-Z ]*PRIVATE KEY)' -- . ':!docs/REPOSITORY_BOUNDARY.md' || true
+python3 tests/test-pipeline.py
+python3 tests/test-reviewer-revision.py
+git grep -nEi '(credential|api[_-]?key|secret|token|BEGIN [A-Z ]*PRIVATE KEY)' -- . ':!docs/repository-boundary.md' || true
 find . -type f \( -name '*.docx' -o -name '*.pdf' \) -not -path './docs/*' -print
 git add <reviewed-public-files>
 git diff --cached --check
@@ -222,7 +222,7 @@ git push origin main
 |---|---|---|
 | 数据来源 | 每张表、图、README、稿件段落均能追溯到 `config/`、公开聚合 CSV 或带 URL 的来源台账。 | 无无来源数值；无把供应商覆盖写成 DGP 校准。 |
 | 数值 | 重新计算主要拒绝率、MCSE 和表中四舍五入；核对合并 $R$。 | 与来源 CSV 一致；二元 MCSE 用合并重复数而非种子 MCSE 均值。 |
-| 代码 | `tests/test_pipeline.py` 与 `tests/test_reviewer_revision.py` 完整通过。 | 退出码为 0；新优化路径有等价性测试。 |
+| 代码 | `tests/test-pipeline.py` 与 `tests/test-reviewer-revision.py` 完整通过。 | 退出码为 0；新优化路径有等价性测试。 |
 | 图表 | 文件存在、600 dpi、图注与表内数值/推断标签一致、无裁切。 | 打开图像实际检查可读性；没有把 two-way 诊断标成主结论。 |
 | 论文 | Title、Abstract、Methods、Results、Limitations、Data/Code Availability、CRediT、COI 与参考文献完整。 | 不添加未运行结果、不称 SOTA、不改变已核验结论。 |
 | 开放边界 | 扫描 `.docx`、`.pdf`、种子/重复级输出、原始 SEC、许可 ESG、凭据及评审材料。 | 公开仓库零命中；私有仓库只保留经许可的受控材料。 |

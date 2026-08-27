@@ -7,5 +7,5 @@ PyYAML==6.0.2
 matplotlib==3.11.1
 python-docx==1.2.0
 
-# Optional: required only by src/collect_sec_metadata.py
+# Optional: required only by src/collect-sec-metadata.py
 requests==2.32.5

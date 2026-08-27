@@ -7,6 +7,7 @@ in rejection frequencies; it is not an empirical firm-level data set.
 from __future__ import annotations
 
 import argparse
+import importlib
 import hashlib
 import json
 import platform
@@ -17,9 +18,10 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from esg_monte_carlo import load_config, one_replication
-
 ROOT = Path(__file__).resolve().parents[1]
+CORE = importlib.import_module("esg-monte-carlo")
+load_config = CORE.load_config
+one_replication = CORE.one_replication
 
 
 def replication_seeds(master_seed: int, repetitions: int) -> list[int]:
@@ -60,7 +62,7 @@ def main() -> None:
                 "beta_interaction": result["beta_interaction"],
                 "n_obs": result["n_obs"],
             })
-    destination = args.output / "replication_level" / "primary_paired_replicates.csv"
+    destination = args.output / "replication-level" / "primary-paired-replicates.csv"
     destination.parent.mkdir(parents=True, exist_ok=True)
     pd.DataFrame(rows).to_csv(destination, index=False)
     manifest = {
@@ -74,7 +76,7 @@ def main() -> None:
         "platform": platform.platform(),
         "scope": "Synthetic DGP only; records must remain private because they are replication-level audit outputs.",
     }
-    (args.output / "manifest_paired_primary.json").write_text(json.dumps(manifest, indent=2), encoding="utf-8")
+    (args.output / "manifest-paired-primary.json").write_text(json.dumps(manifest, indent=2), encoding="utf-8")
     print(f"Wrote {len(rows)} paired synthetic replication records to {destination}")
 
 

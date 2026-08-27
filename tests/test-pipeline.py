@@ -1,4 +1,5 @@
 """Minimal deterministic checks for the ESG Monte Carlo replication pipeline."""
+import importlib
 import sys
 from pathlib import Path
 
@@ -6,17 +7,16 @@ import numpy as np
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
-from esg_monte_carlo import (  # noqa: E402
-    fit_second_stage,
-    fit_second_stage_prepared,
-    load_config,
-    mcse,
-    one_way_covariance,
-    prepare_second_stage,
-    restricted_wild_cluster_bootstrap,
-    second_stage_data,
-    simulate_panel,
-)
+CORE = importlib.import_module("esg-monte-carlo")
+fit_second_stage = CORE.fit_second_stage
+fit_second_stage_prepared = CORE.fit_second_stage_prepared
+load_config = CORE.load_config
+mcse = CORE.mcse
+one_way_covariance = CORE.one_way_covariance
+prepare_second_stage = CORE.prepare_second_stage
+restricted_wild_cluster_bootstrap = CORE.restricted_wild_cluster_bootstrap
+second_stage_data = CORE.second_stage_data
+simulate_panel = CORE.simulate_panel
 
 
 def legacy_wild_bootstrap(fit, firm, replications, seed):

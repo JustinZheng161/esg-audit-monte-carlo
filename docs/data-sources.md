@@ -6,9 +6,9 @@ Every observation used in the reported tables and figures is **synthetically gen
 
 | Public asset | Location | Source label | Release status |
 |---|---|---|---|
-| Synthetic schema example | `data/public/synthetic_example_null.csv` | This project’s deterministic synthetic DGP | Included |
-| Pooled main aggregate results | `outputs/final_run_round2_pooled/` | This project’s synthetic Monte Carlo DGP | Included |
-| Pooled round-two aggregate diagnostics | `outputs/round2_pooled/`; `outputs/round2_big4_pooled/` | This project’s synthetic Monte Carlo DGP | Included |
+| Synthetic schema example | `data/public/synthetic-example-null.csv` | This project’s deterministic synthetic DGP | Included |
+| Pooled main aggregate results | `outputs/final-run-round2-pooled/` | This project’s synthetic Monte Carlo DGP | Included |
+| Pooled round-two aggregate diagnostics | `outputs/round2-pooled/`; `outputs/round2-big4-pooled/` | This project’s synthetic Monte Carlo DGP | Included |
 | DGP configuration | `config/dgp.yaml` | This project’s synthetic assumptions | Included |
 
 No SEC, ESG-vendor, auditor, or financial-statement dataset is an input to the reported DGP, calibration, table, or figure. The package has no external empirical data dependency.

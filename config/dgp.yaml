@@ -119,7 +119,7 @@ dgp:
       esg_log_sd: -0.10
       esg_big4_log_sd: -0.12
 
-review_round2:
+review-round2:
   extension_repetitions_per_seed: 500
   extension_seeds: [20260827, 20260828]
   mcse_interval_multiplier: 1.96

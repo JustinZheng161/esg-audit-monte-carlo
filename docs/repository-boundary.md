@@ -13,23 +13,23 @@
 
 | Whitelist class | Public path(s) | Rationale |
 |---|---|---|
-| Core simulation and pooling code | `src/esg_monte_carlo.py`; `src/compare_runs.py`; `src/run_round2_diagnostics.py`; `src/aggregate_round2_diagnostics.py`; `src/run_round2_big4_mechanism.py`; `src/aggregate_round2_big4_mechanism.py` | Regenerates corrected-sample-flow main and reviewer diagnostics |
+| Core simulation and pooling code | `src/esg-monte-carlo.py`; `src/compare-runs.py`; `src/run-round2-diagnostics.py`; `src/aggregate-round2-diagnostics.py`; `src/run-round2-big4-mechanism.py`; `src/aggregate-round2-big4-mechanism.py` | Regenerates corrected-sample-flow main and reviewer diagnostics |
 | Configuration | `config/dgp.yaml` | Provides the sole executable description of synthetic assumptions |
-| Tests | `tests/test_pipeline.py`; `tests/test_reviewer_revision.py` | Checks synthetic sample flow, pooling rules, and aggregate artifact contract |
-| Synthetic example only | `data/public/synthetic_example_null.csv` | Demonstrates schema without real firms |
-| Pooled main evidence | `outputs/final_run_round2_pooled/tables/*.csv`; `outputs/final_run_round2_pooled/figures/figure_1_primary_operating_characteristics_pooled.png` | Corrected primary results and dual-inference visual |
-| Pooled second-round evidence | `outputs/round2_pooled/tables/*.csv`; `outputs/round2_pooled/figures/*.png`; `outputs/round2_pooled/manifest.json` | Time structure, scale mapping, availability, and first-stage FE diagnostics |
-| Pooled Big Four mechanism evidence | `outputs/round2_big4_pooled/tables/*.csv`; `outputs/round2_big4_pooled/figures/*.png`; `outputs/round2_big4_pooled/manifest.json` | Corrected-sample-flow selection-only ablation |
+| Tests | `tests/test-pipeline.py`; `tests/test-reviewer-revision.py` | Checks synthetic sample flow, pooling rules, and aggregate artifact contract |
+| Synthetic example only | `data/public/synthetic-example-null.csv` | Demonstrates schema without real firms |
+| Pooled main evidence | `outputs/final-run-round2-pooled/tables/*.csv`; `outputs/final-run-round2-pooled/figures/figure-1-primary-operating-characteristics-pooled.png` | Corrected primary results and dual-inference visual |
+| Pooled second-round evidence | `outputs/round2-pooled/tables/*.csv`; `outputs/round2-pooled/figures/*.png`; `outputs/round2-pooled/manifest.json` | Time structure, scale mapping, availability, and first-stage FE diagnostics |
+| Pooled Big Four mechanism evidence | `outputs/round2-big4-pooled/tables/*.csv`; `outputs/round2-big4-pooled/figures/*.png`; `outputs/round2-big4-pooled/manifest.json` | Corrected-sample-flow selection-only ablation |
 | Documentation | `README.md`; `docs/*.md`; `requirements.txt`; `LICENSE`; `.gitignore` | Reproduction, provenance, and governance documentation |
 
-The private manuscript builder (`src/build_revised_manuscript.py`) is intentionally excluded from the public release because it embeds anonymous manuscript text and writes a private DOCX. It contains no reported real-company data but is not necessary to reproduce published numerical outputs.
+The private manuscript builder (`src/build-revised-manuscript.py`) is intentionally excluded from the public release because it embeds anonymous manuscript text and writes a private DOCX. It contains no reported real-company data but is not necessary to reproduce published numerical outputs.
 
 ## Prohibited public files and patterns
 
 ```text
-*.docx, *.pdf, .env*, *token*, *secret*, *credential*, private/, review_round2/,
-outputs/final_run_round2_seed_*/, outputs/round2_seed_*/, outputs/round2_big4_seed_*/,
-outputs/*/replication_level/, data/raw/, data/restricted/, CSMAR/, Wind/, Bloomberg/,
+*.docx, *.pdf, .env*, *token*, *secret*, *credential*, private/, review-round2/,
+outputs/final-run_round2_seed_*/, outputs/round2_seed_*/, outputs/round2_big4_seed_*/,
+outputs/*/replication-level/, data/raw/, data/restricted/, CSMAR/, Wind/, Bloomberg/,
 Refinitiv/, MSCI/, Sustainalytics/, AuditAnalytics/, Compustat/
 ```
 
@@ -51,22 +51,22 @@ Names alone do not establish sensitivity. Nevertheless, every matching candidate
 WORK=/path/to/esg_audit/reproducibility
 rsync -a --delete \
   --include='README.md' --include='LICENSE' --include='requirements.txt' --include='.gitignore' \
-  --include='config/***' --include='src/esg_monte_carlo.py' --include='src/compare_runs.py' \
-  --include='src/run_round2_diagnostics.py' --include='src/aggregate_round2_diagnostics.py' \
-  --include='src/run_round2_big4_mechanism.py' --include='src/aggregate_round2_big4_mechanism.py' \
-  --include='tests/***' --include='data/public/synthetic_example_null.csv' --include='docs/***' \
-  --include='outputs/final_run_round2_pooled/tables/***' \
-  --include='outputs/final_run_round2_pooled/figures/figure_1_primary_operating_characteristics_pooled.png' \
-  --include='outputs/round2_pooled/tables/***' --include='outputs/round2_pooled/figures/***' \
-  --include='outputs/round2_pooled/manifest.json' \
-  --include='outputs/round2_big4_pooled/tables/***' --include='outputs/round2_big4_pooled/figures/***' \
-  --include='outputs/round2_big4_pooled/manifest.json' \
+  --include='config/***' --include='src/esg-monte-carlo.py' --include='src/compare-runs.py' \
+  --include='src/run-round2-diagnostics.py' --include='src/aggregate-round2-diagnostics.py' \
+  --include='src/run-round2-big4-mechanism.py' --include='src/aggregate-round2-big4-mechanism.py' \
+  --include='tests/***' --include='data/public/synthetic-example-null.csv' --include='docs/***' \
+  --include='outputs/final-run-round2-pooled/tables/***' \
+  --include='outputs/final-run-round2-pooled/figures/figure-1-primary-operating-characteristics-pooled.png' \
+  --include='outputs/round2-pooled/tables/***' --include='outputs/round2-pooled/figures/***' \
+  --include='outputs/round2-pooled/manifest.json' \
+  --include='outputs/round2-big4-pooled/tables/***' --include='outputs/round2-big4-pooled/figures/***' \
+  --include='outputs/round2-big4-pooled/manifest.json' \
   --exclude='*' "$WORK/" .
 
 # Required negative checks before public push.
-find . -type f \( -iname '*.docx' -o -iname '*.pdf' -o -path '*/private/*' -o -path '*/review_round2/*' \
+find . -type f \( -iname '*.docx' -o -iname '*.pdf' -o -path '*/private/*' -o -path '*/review-round2/*' \
   -o -path '*/data/raw/*' -o -path '*/data/restricted/*' -o -path '*/outputs/*seed*/*' \
-  -o -path '*/outputs/*/replication_level/*' \) -print
+  -o -path '*/outputs/*/replication-level/*' \) -print
 
 grep -RInE --exclude-dir='.git' --exclude='*.png' --exclude='*.csv' \
   '(OPENAI_API_KEY|api[_-]?key|secret|password|token)' .

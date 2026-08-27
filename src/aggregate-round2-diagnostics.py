@@ -30,7 +30,7 @@ FE_KEYS = ["first_stage_fe"]
 
 def read_replicates(seed_dir: Path, filename: str) -> pd.DataFrame:
     """Read one stored replicate-level file and attach its independent master seed."""
-    frame = pd.read_csv(seed_dir / "replication_level" / filename)
+    frame = pd.read_csv(seed_dir / "replication-level" / filename)
     manifest = json.loads((seed_dir / "manifest.json").read_text(encoding="utf-8"))
     frame.insert(0, "master_seed", int(manifest["master_seed"]))
     return frame
@@ -175,29 +175,29 @@ def main() -> None:
     out_tables.mkdir(parents=True, exist_ok=True)
     out_figures.mkdir(parents=True, exist_ok=True)
 
-    time = pd.concat([read_replicates(d, "time_structure_replicates.csv") for d in args.seed_dirs], ignore_index=True)
-    scale = pd.concat([read_replicates(d, "scale_mapping_replicates.csv") for d in args.seed_dirs], ignore_index=True)
-    availability = pd.concat([read_replicates(d, "availability_replicates.csv") for d in args.seed_dirs], ignore_index=True)
-    fe = pd.concat([read_replicates(d, "first_stage_fe_replicates.csv") for d in args.seed_dirs], ignore_index=True)
+    time = pd.concat([read_replicates(d, "time-structure-replicates.csv") for d in args.seed_dirs], ignore_index=True)
+    scale = pd.concat([read_replicates(d, "scale-mapping-replicates.csv") for d in args.seed_dirs], ignore_index=True)
+    availability = pd.concat([read_replicates(d, "availability-replicates.csv") for d in args.seed_dirs], ignore_index=True)
+    fe = pd.concat([read_replicates(d, "first-stage-fe-replicates.csv") for d in args.seed_dirs], ignore_index=True)
 
     time_summary = summarize_common(time, TIME_KEYS).sort_values(["analysis_time_clusters", "esg_variance_scale", "esg_persistence"])
     scale_summary = summarize_scale(scale)
     availability_summary = summarize_common(availability, AVAILABILITY_KEYS)
     fe_summary = summarize_common(fe, FE_KEYS)
 
-    time_summary.to_csv(out_tables / "table_10_time_structure_sensitivity_pooled.csv", index=False)
-    scale_summary.to_csv(out_tables / "table_11_scale_mapping_pooled.csv", index=False)
-    availability_summary.to_csv(out_tables / "table_12_selective_availability_pooled.csv", index=False)
-    fe_summary.to_csv(out_tables / "table_13_first_stage_fe_sensitivity_pooled.csv", index=False)
+    time_summary.to_csv(out_tables / "table-10-time-structure-sensitivity-pooled.csv", index=False)
+    scale_summary.to_csv(out_tables / "table-11-scale-mapping-pooled.csv", index=False)
+    availability_summary.to_csv(out_tables / "table-12-selective-availability-pooled.csv", index=False)
+    fe_summary.to_csv(out_tables / "table-13-first-stage-fe-sensitivity-pooled.csv", index=False)
 
     reference_diagnostics = []
     for directory in args.seed_dirs:
-        diagnostic = pd.read_csv(directory / "tables" / "table_a3_first_stage_fe_design_diagnostics.csv")
+        diagnostic = pd.read_csv(directory / "tables" / "table-a3-first-stage-fe-design-diagnostics.csv")
         manifest = json.loads((directory / "manifest.json").read_text(encoding="utf-8"))
         diagnostic.insert(0, "master_seed", int(manifest["master_seed"]))
         reference_diagnostics.append(diagnostic)
     pd.concat(reference_diagnostics, ignore_index=True).to_csv(
-        out_tables / "table_a3_first_stage_fe_design_reference_panels.csv", index=False
+        out_tables / "table-a3-first-stage-fe-design-reference-panels.csv", index=False
     )
 
     provenance = {
@@ -212,9 +212,9 @@ def main() -> None:
     }
     (args.output / "manifest.json").write_text(json.dumps(provenance, indent=2), encoding="utf-8")
 
-    plot_time_structure(time_summary, out_figures / "figure_4_time_structure_sensitivity_pooled.png")
-    plot_scale_mapping(scale_summary, out_figures / "figure_5_scale_mapping_pooled.png")
-    plot_availability(availability_summary, out_figures / "figure_6_selective_availability_pooled.png")
+    plot_time_structure(time_summary, out_figures / "figure-4-time-structure-sensitivity-pooled.png")
+    plot_scale_mapping(scale_summary, out_figures / "figure-5-scale-mapping-pooled.png")
+    plot_availability(availability_summary, out_figures / "figure-6-selective-availability-pooled.png")
     print(f"Pooled {len(time['master_seed'].unique())} independent seeds into {args.output}")
 
 

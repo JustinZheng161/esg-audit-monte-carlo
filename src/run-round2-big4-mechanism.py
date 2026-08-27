@@ -8,6 +8,7 @@ real auditors or ESG assurance.
 from __future__ import annotations
 
 import argparse
+import importlib
 import hashlib
 import json
 import math
@@ -22,9 +23,13 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-from esg_monte_carlo import fit_second_stage, load_config, mcse, second_stage_data, simulate_panel
-
 ROOT = Path(__file__).resolve().parents[1]
+CORE = importlib.import_module("esg-monte-carlo")
+fit_second_stage = CORE.fit_second_stage
+load_config = CORE.load_config
+mcse = CORE.mcse
+second_stage_data = CORE.second_stage_data
+simulate_panel = CORE.simulate_panel
 
 
 def seeds(master_seed: int, repetitions: int) -> list[int]:
@@ -98,14 +103,14 @@ def main() -> None:
         summary_rows.append(summarize(rows, label))
 
     output = args.output
-    tables, figures, replicates = output / "tables", output / "figures", output / "replication_level"
+    tables, figures, replicates = output / "tables", output / "figures", output / "replication-level"
     tables.mkdir(parents=True, exist_ok=True)
     figures.mkdir(parents=True, exist_ok=True)
     replicates.mkdir(parents=True, exist_ok=True)
     summary = pd.DataFrame(summary_rows)
-    summary.to_csv(tables / "table_9_big4_mechanism_ablation.csv", index=False)
-    pd.DataFrame(replicate_rows).to_csv(replicates / "big4_mechanism_replicates.csv", index=False)
-    plot(summary, figures / "figure_3_big4_mechanism_ablation.png")
+    summary.to_csv(tables / "table-9-big4-mechanism-ablation.csv", index=False)
+    pd.DataFrame(replicate_rows).to_csv(replicates / "big4-mechanism-replicates.csv", index=False)
+    plot(summary, figures / "figure-3-big4-mechanism-ablation.png")
     manifest = {
         "generated_at_utc": datetime.now(timezone.utc).isoformat(),
         "master_seed": int(args.seed),

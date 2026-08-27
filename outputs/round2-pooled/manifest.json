@@ -1,7 +1,7 @@
 {
   "seed_directories": [
-    "outputs/round2_seed_20260827",
-    "outputs/round2_seed_20260828"
+    "outputs/round2-seed-20260827",
+    "outputs/round2-seed-20260828"
   ],
   "master_seeds": [
     20260827,

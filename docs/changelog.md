@@ -20,11 +20,11 @@ The supplied materials included an original DOCX manuscript but **no pre-existin
 
 | File | Status | Function |
 |---|---|---|
-| `src/esg_monte_carlo.py` | New | Synthetic DGP, fixed-effect residualization, firm/two-way cluster covariance, primary experiments, ablations, placebos, restricted firm wild bootstrap, figures, and manifests. |
-| `src/collect_sec_metadata.py` | New | Optional SEC metadata collection; writes raw JSON privately and a source/hash manifest publicly. |
-| `src/compare_runs.py` | New | Aggregates independent seed runs while preserving scenario, firm count, and effect-scale identities. |
-| `src/build_revised_manuscript.py` | New/private | Builds the revised DOCX from verified outputs; excluded from public release. |
-| `tests/test_pipeline.py` | New | Deterministic checks for panel shape, lags, finite estimates, p-value bounds, and bootstrap output. |
+| `src/esg-monte-carlo.py` | New | Synthetic DGP, fixed-effect residualization, firm/two-way cluster covariance, primary experiments, ablations, placebos, restricted firm wild bootstrap, figures, and manifests. |
+| `src/collect-sec-metadata.py` | New | Optional SEC metadata collection; writes raw JSON privately and a source/hash manifest publicly. |
+| `src/compare-runs.py` | New | Aggregates independent seed runs while preserving scenario, firm count, and effect-scale identities. |
+| `src/build-revised-manuscript.py` | New/private | Builds the revised DOCX from verified outputs; excluded from public release. |
+| `tests/test-pipeline.py` | New | Deterministic checks for panel shape, lags, finite estimates, p-value bounds, and bootstrap output. |
 
 ## Critical code correction: timing alignment
 
@@ -79,7 +79,7 @@ The pre-optimization bootstrap loop recomputed the OLS bread matrix and firm-gro
 | Patch | Replaced bottleneck | Validation | Result |
 |---|---|---|---|
 | Cache invariant linear-algebra and cluster encoding in `restricted_wild_cluster_bootstrap` | Per-draw `pinv(X'X)`, `np.unique(firm)`, and covariance helper setup | Exact p-value equivalence test against the legacy loop for an identical synthetic draw and seed | Passed |
-| Add `tests/benchmark_bootstrap.py` | No performance guardrail | 399-draw N=300 microbenchmark on the supplied Linux environment | Legacy: 0.111737 s; cached: 0.057006 s; **1.960×** speed-up; p-value identical (0.650000) |
+| Add `tests/benchmark-bootstrap.py` | No performance guardrail | 399-draw N=300 microbenchmark on the supplied Linux environment | Legacy: 0.111737 s; cached: 0.057006 s; **1.960×** speed-up; p-value identical (0.650000) |
 
 This patch is motivated by the computational structure of fast wild-bootstrap implementations described by Roodman, MacKinnon, Nielsen, and Webb (2019), who note that wild-bootstrap inference is particularly amenable to computational optimization. Source: https://doi.org/10.1177/1536867X19830877.
 
@@ -89,10 +89,10 @@ A second recommended scale-out patch, not required for the current N≤500 runs,
 
 | Review issue | Before | After | Verification |
 |---|---|---|---|
-| Main effective N | Text could be read without a full observation flow; review memo cited an unexplained N=2,000. | New Table 3 specifies 3,000 raw/first-stage rows, 2,700 post-lag rows, 2,400 main second-stage rows, and 2,169 only for MAR-like stress. | `tests/test_pipeline.py`; regenerated Tables 5–7. |
+| Main effective N | Text could be read without a full observation flow; review memo cited an unexplained N=2,000. | New Table 3 specifies 3,000 raw/first-stage rows, 2,700 post-lag rows, 2,400 main second-stage rows, and 2,169 only for MAR-like stress. | `tests/test-pipeline.py`; regenerated Tables 5–7. |
 | DGP transparency | Several DGP constants appeared only as code literals. | All generating constants are explicit in `config/dgp.yaml`; the manuscript Table 1 is derived from this single source of truth. | Configuration-completeness test; anonymous DOCX visual check. |
 | MCSE disclosure | Result tables displayed parenthetical MCSE without an explicit in-text formula. | Section 2.2 and Section 3 define `sqrt[p̂(1−p̂)/R]`; pooled tables use combined rejection counts and total R. | Canonical formula assertion and CSV/table cross-check. |
-| Few time clusters | Eight analysis years were described as a stress diagnostic without a time-dimension gradient. | Two independent 500-repetition seeds run 8/18/28 analysis time clusters; Table 8/Figure 2 report pooled size and MCSE. | `outputs/reviewer_diagnostics_pooled/`. |
+| Few time clusters | Eight analysis years were described as a stress diagnostic without a time-dimension gradient. | Two independent 500-repetition seeds run 8/18/28 analysis time clusters; Table 8/Figure 2 report pooled size and MCSE. | `outputs/reviewer-diagnostics-pooled/`. |
 | Big Four construct | Direct residual-variance interaction and the proxy limitation were not separately tested. | The DGP now accepts `big4_variance_scale`; Table 9/Figure 3 contrast direct-role and selection-only conditions. | Deterministic selection/ESG-stream equivalence test; two independent pooled runs. |
 | SEC metadata wording | Manuscript mentioned an unused company metadata snapshot. | Anonymous paper now states that no real-company financial, ESG, audit, regulatory, or commercial records enter analysis. | Data/code availability statements and public-boundary scan. |
 | Anonymous CRediT | Narrative statement included `manuscript editing assistance`. | Standard anonymized CRediT role statement only. | Anonymous-text scan and final DOCX review. |
@@ -102,12 +102,12 @@ A second recommended scale-out patch, not required for the current N≤500 runs,
 ### Corrected implementation
 
 - Corrected the sample flow so the first-stage expected-investment equation is fitted on the full 3,000-row synthetic primary panel, using the documented initial investment state for the first lag. The common second-stage lag/lead protocol remains 2,400 rows.
-- Retired prior main and reviewer numerical claims that were generated before this first-stage correction. Reported primary results now reside under `outputs/final_run_round2_*` and the two-seed pooled directory.
-- Extended `compare_runs.py` to generate the pooled N=300 grouped-bar Figure 1 with separate firm-clustered and two-way firm–year bars and 95% Monte Carlo intervals.
+- Retired prior main and reviewer numerical claims that were generated before this first-stage correction. Reported primary results now reside under `outputs/final-run_round2_*` and the two-seed pooled directory.
+- Extended `compare-runs.py` to generate the pooled N=300 grouped-bar Figure 1 with separate firm-clustered and two-way firm–year bars and 95% Monte Carlo intervals.
 
 ### New reviewer diagnostics
 
-- Added `run_round2_diagnostics.py` and `aggregate_round2_diagnostics.py`. They preserve replication-level results and pool binary rates from all outer repetitions; coefficient-mean MCSEs use the replication-level sample standard deviation divided by the square root of the pooled repetition count.
+- Added `run-round2-diagnostics.py` and `aggregate-round2-diagnostics.py`. They preserve replication-level results and pool binary rates from all outer repetitions; coefficient-mean MCSEs use the replication-level sample standard deviation divided by the square root of the pooled repetition count.
 - Added a time-structure grid varying 8/28 analysable time clusters, ESG persistence (0.25/0.60/0.95), and ESG-dependent residual-variance scale (0/1) under an interaction null.
 - Added an oracle/estimated-residual scale-mapping grid that distinguishes DGP \(\gamma_{INT}\) in log-SD units from second-stage \(\beta_3\) values on log absolute true-deviation or estimated-residual scales.
 - Replaced the former “MAR-like” label with adverse selective-availability stress and added a non-calibrated coverage-aligned synthetic sensitivity.
@@ -116,6 +116,6 @@ A second recommended scale-out patch, not required for the current N≤500 runs,
 
 ### Manuscript and release documentation
 
-- Rebuilt `ESG_Audit_InvestmentEfficiency_round2_revised_anonymous.docx` from only corrected pooled outputs. The manuscript unifies terminology as “Big Four auditor indicator,” adds scale-mapping and residual-proxy limitations, conditions time-cluster claims on the DGP, and relocates research positioning to Appendix Table B1.
-- Added `RESPONSE_TO_REVIEWERS_ROUND2.md`, `ROUND2_RESULT_AND_FIGURE_CHECK.md`, and a private final-submission author-replacement checklist.
+- Rebuilt `esg-audit-investment-efficiency-round2-revised-anonymous.docx` from only corrected pooled outputs. The manuscript unifies terminology as “Big Four auditor indicator,” adds scale-mapping and residual-proxy limitations, conditions time-cluster claims on the DGP, and relocates research positioning to Appendix Table B1.
+- Added `response-to-reviewers-round2.md`, `round2-result-and-figure-check.md`, and a private final-submission author-replacement checklist.
 - Updated the public README, repository boundary whitelist, and deterministic reviewer-revision test contract.

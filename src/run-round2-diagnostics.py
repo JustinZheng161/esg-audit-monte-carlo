@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import argparse
 import copy
+import importlib
 import hashlib
 import json
 import math
@@ -25,17 +26,15 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-from esg_monte_carlo import (
-    fit_second_stage,
-    fit_second_stage_prepared,
-    load_config,
-    mcse,
-    prepare_second_stage,
-    second_stage_data,
-    simulate_panel,
-)
-
 ROOT = Path(__file__).resolve().parents[1]
+CORE = importlib.import_module("esg-monte-carlo")
+fit_second_stage = CORE.fit_second_stage
+fit_second_stage_prepared = CORE.fit_second_stage_prepared
+load_config = CORE.load_config
+mcse = CORE.mcse
+prepare_second_stage = CORE.prepare_second_stage
+second_stage_data = CORE.second_stage_data
+simulate_panel = CORE.simulate_panel
 
 
 def set_year_dimension(cfg: dict, analysis_time_clusters: int) -> dict:
@@ -127,7 +126,7 @@ def first_stage_fe_design_diagnostics(df: pd.DataFrame, cfg: dict) -> pd.DataFra
     beta_base, *_ = np.linalg.lstsq(base, y, rcond=None)
     ssr_base = float(np.sum((y - base @ beta_base) ** 2))
     rows = []
-    for spec in cfg["review_round2"]["first_stage_fe_sensitivity"]["specifications"]:
+    for spec in cfg["review-round2"]["first_stage_fe_sensitivity"]["specifications"]:
         extras: list[np.ndarray] = []
         if spec == "industry_year":
             group = df["industry"].astype(str) + "_" + df["year"].astype(str)
@@ -161,7 +160,7 @@ def first_stage_fe_design_diagnostics(df: pd.DataFrame, cfg: dict) -> pd.DataFra
 
 
 def run_time_structure(cfg: dict, repetitions: int, master_seed: int) -> tuple[pd.DataFrame, pd.DataFrame]:
-    settings = cfg["review_round2"]["time_structure"]
+    settings = cfg["review-round2"]["time_structure"]
     rows, replicate_rows = [], []
     offset = 1000
     for clusters in settings["analysis_time_clusters"]:
@@ -195,8 +194,8 @@ def run_scale_mapping(cfg: dict, repetitions: int, master_seed: int) -> tuple[pd
     full = cfg["dgp"]["log_sigma_mapping"]["full_alternative"]
     rows, replicate_rows = [], []
     offset = 3000
-    for firms in cfg["review_round2"]["scale_mapping"]["firm_counts"]:
-        for effect_scale in cfg["review_round2"]["scale_mapping"]["effect_scales"]:
+    for firms in cfg["review-round2"]["scale_mapping"]["firm_counts"]:
+        for effect_scale in cfg["review-round2"]["scale_mapping"]["effect_scales"]:
             oracle_beta, estimated_beta = [], []
             for seed in seeds(master_seed + offset, repetitions):
                 df = simulate_panel(seed, int(firms), float(effect_scale), cfg)
@@ -252,7 +251,7 @@ def run_availability(cfg: dict, repetitions: int, master_seed: int) -> tuple[pd.
 
 def run_first_stage_fe(cfg: dict, repetitions: int, master_seed: int) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     rows, replicate_rows = [], []
-    for index, specification in enumerate(cfg["review_round2"]["first_stage_fe_sensitivity"]["specifications"]):
+    for index, specification in enumerate(cfg["review-round2"]["first_stage_fe_sensitivity"]["specifications"]):
         results = []
         for rep_seed in seeds(master_seed + 5000 + index, repetitions):
             df = simulate_panel(rep_seed, int(cfg["panel"]["primary_firms"]), 1.0, cfg)
@@ -327,7 +326,7 @@ def main() -> None:
     parser.add_argument("--seed", type=int, required=True, help="Independent master seed.")
     args = parser.parse_args()
     cfg = load_config(args.config)
-    reps = int(args.reps or cfg["review_round2"]["extension_repetitions_per_seed"])
+    reps = int(args.reps or cfg["review-round2"]["extension_repetitions_per_seed"])
     output = args.output
     tables, figures = output / "tables", output / "figures"
     tables.mkdir(parents=True, exist_ok=True)
@@ -337,20 +336,20 @@ def main() -> None:
     scale_mapping, scale_replicates = run_scale_mapping(cfg, reps, int(args.seed))
     availability, availability_replicates = run_availability(cfg, reps, int(args.seed))
     fe_sensitivity, fe_design, fe_replicates = run_first_stage_fe(cfg, reps, int(args.seed))
-    time_structure.to_csv(tables / "table_10_time_structure_sensitivity.csv", index=False)
-    scale_mapping.to_csv(tables / "table_11_scale_mapping.csv", index=False)
-    availability.to_csv(tables / "table_12_selective_availability.csv", index=False)
-    fe_sensitivity.to_csv(tables / "table_13_first_stage_fe_sensitivity.csv", index=False)
-    fe_design.to_csv(tables / "table_a3_first_stage_fe_design_diagnostics.csv", index=False)
-    replicate_dir = output / "replication_level"
+    time_structure.to_csv(tables / "table-10-time-structure-sensitivity.csv", index=False)
+    scale_mapping.to_csv(tables / "table-11-scale-mapping.csv", index=False)
+    availability.to_csv(tables / "table-12-selective-availability.csv", index=False)
+    fe_sensitivity.to_csv(tables / "table-13-first-stage-fe-sensitivity.csv", index=False)
+    fe_design.to_csv(tables / "table-a3-first-stage-fe-design-diagnostics.csv", index=False)
+    replicate_dir = output / "replication-level"
     replicate_dir.mkdir(parents=True, exist_ok=True)
-    time_replicates.to_csv(replicate_dir / "time_structure_replicates.csv", index=False)
-    scale_replicates.to_csv(replicate_dir / "scale_mapping_replicates.csv", index=False)
-    availability_replicates.to_csv(replicate_dir / "availability_replicates.csv", index=False)
-    fe_replicates.to_csv(replicate_dir / "first_stage_fe_replicates.csv", index=False)
-    plot_time_structure(time_structure, figures / "figure_4_time_structure_sensitivity.png")
-    plot_scale_mapping(scale_mapping, figures / "figure_5_scale_mapping.png")
-    plot_availability(availability, figures / "figure_6_selective_availability.png")
+    time_replicates.to_csv(replicate_dir / "time-structure-replicates.csv", index=False)
+    scale_replicates.to_csv(replicate_dir / "scale-mapping-replicates.csv", index=False)
+    availability_replicates.to_csv(replicate_dir / "availability-replicates.csv", index=False)
+    fe_replicates.to_csv(replicate_dir / "first-stage-fe-replicates.csv", index=False)
+    plot_time_structure(time_structure, figures / "figure-4-time-structure-sensitivity.png")
+    plot_scale_mapping(scale_mapping, figures / "figure-5-scale-mapping.png")
+    plot_availability(availability, figures / "figure-6-selective-availability.png")
 
     config_bytes = args.config.read_bytes()
     manifest = {

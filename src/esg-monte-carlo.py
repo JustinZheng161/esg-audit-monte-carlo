@@ -290,7 +290,7 @@ def second_stage_data(df: pd.DataFrame, include_esg_first_stage: bool = False, m
     if availability != "complete":
         if cfg is None:
             raise ValueError("cfg is required for non-complete availability diagnostics")
-        availability_cfg = cfg["review_round2"]["selective_availability"]
+        availability_cfg = cfg["review-round2"]["selective_availability"]
         rng = np.random.default_rng(seed)
         if availability == "adverse_selective":
             params = availability_cfg["adverse_missing_logit"]
@@ -457,8 +457,8 @@ def monte_carlo(label: str, n_firms: int, effect_scale: float, repetitions: int,
 
 def make_figures(null_df: pd.DataFrame, alt_df: pd.DataFrame, summary: pd.DataFrame, figure_dir: Path) -> None:
     figure_dir.mkdir(parents=True, exist_ok=True)
-    for title, df, filename in [("Null scenario", null_df, "figure_a1_null_diagnostics.png"),
-                                ("Alternative scenario", alt_df, "figure_a2_alternative_diagnostics.png")]:
+    for title, df, filename in [("Null scenario", null_df, "figure-a1-null-diagnostics.png"),
+                                ("Alternative scenario", alt_df, "figure-a2-alternative-diagnostics.png")]:
         use = second_stage_data(df)
         fig, axes = plt.subplots(1, 3, figsize=(12, 3.5), constrained_layout=True)
         panels = [("Lagged ESG", use["esg_lag"], "#4C78A8"), ("Investment rate", use["investment"], "#72B7B2"),
@@ -493,7 +493,7 @@ def make_figures(null_df: pd.DataFrame, alt_df: pd.DataFrame, summary: pd.DataFr
     ax.set_ylim(0, 0.50)
     ax.legend(frameon=False, ncol=3, fontsize=8)
     ax.set_title("Rejection probabilities by sample size, DGP effect scale, and covariance estimator")
-    fig.savefig(figure_dir / "figure_1_power_curve.png", dpi=600, bbox_inches="tight")
+    fig.savefig(figure_dir / "figure-1-power-curve.png", dpi=600, bbox_inches="tight")
     plt.close(fig)
 
 
@@ -548,7 +548,7 @@ def main() -> None:
         monte_carlo("Full alternative (wild bootstrap diagnostic)", primary_n, 1.0, args.sensitivity_reps, seed + 19, cfg, args.bootstrap_reps),
     ]
     summary = pd.DataFrame(rows)
-    summary.to_csv(table_dir / "table_2_monte_carlo_operating_characteristics.csv", index=False)
+    summary.to_csv(table_dir / "table-2-monte-carlo-operating-characteristics.csv", index=False)
 
     null_df = simulate_panel(seed + 100, primary_n, 0.0, cfg)
     alt_df = simulate_panel(seed + 101, primary_n, 1.0, cfg)
@@ -560,7 +560,7 @@ def main() -> None:
             single_rows.append({"scenario": scenario, "model": model, "n_obs": len(use),
                                 "esg_coefficient": fit["beta"][0], "esg_pvalue": fit["p"][0],
                                 "interaction_coefficient": fit["beta"][2], "interaction_pvalue": fit["p"][2]})
-    pd.DataFrame(single_rows).to_csv(table_dir / "table_1_representative_draws.csv", index=False)
+    pd.DataFrame(single_rows).to_csv(table_dir / "table-1-representative-draws.csv", index=False)
 
     base_use = second_stage_data(alt_df)
     main_fit = fit_second_stage(base_use)
@@ -580,9 +580,9 @@ def main() -> None:
     robust_rows.append({"diagnostic": f"Restricted Rademacher wild bootstrap-t ({args.bootstrap_reps} draws)",
                         "n_obs": len(base_use), "interaction_coefficient": main_fit["beta"][2],
                         "firm_clustered_se": main_fit["se"][2], "firm_clustered_pvalue": wild_p})
-    pd.DataFrame(robust_rows).to_csv(table_dir / "table_3_robustness_and_ablation.csv", index=False)
+    pd.DataFrame(robust_rows).to_csv(table_dir / "table-3-robustness-and-ablation.csv", index=False)
 
-    null_df.head(3000).to_csv(ROOT / "data" / "public" / "synthetic_example_null.csv", index=False)
+    null_df.head(3000).to_csv(ROOT / "data" / "public" / "synthetic-example-null.csv", index=False)
     make_figures(null_df, alt_df, summary, figure_dir)
     write_manifest(output, cfg, args)
     print(f"Completed {len(summary)} Monte Carlo scenarios. Outputs: {output}")

@@ -51,7 +51,7 @@ def main() -> None:
     frames = []
     seeds = []
     for directory in args.seed_dirs:
-        frame = pd.read_csv(directory / "replication_level" / "big4_mechanism_replicates.csv")
+        frame = pd.read_csv(directory / "replication-level" / "big4-mechanism-replicates.csv")
         master_seed = int(json.loads((directory / "manifest.json").read_text(encoding="utf-8"))["master_seed"])
         frame.insert(0, "master_seed", master_seed)
         frames.append(frame)
@@ -79,8 +79,8 @@ def main() -> None:
     tables.mkdir(parents=True, exist_ok=True)
     figures.mkdir(parents=True, exist_ok=True)
     summary = pd.DataFrame(summaries)
-    summary.to_csv(tables / "table_9_big4_mechanism_ablation_pooled.csv", index=False)
-    plot(summary, figures / "figure_3_big4_mechanism_ablation_pooled.png")
+    summary.to_csv(tables / "table-9-big4-mechanism-ablation-pooled.csv", index=False)
+    plot(summary, figures / "figure-3-big4-mechanism-ablation-pooled.png")
     (output / "manifest.json").write_text(json.dumps({
         "master_seeds": sorted(seeds),
         "pooling_rule": {
