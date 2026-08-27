@@ -106,7 +106,7 @@ For the oracle DGP deviation \(u^*=\sigma(X)z\), with a standard-normal innovati
 
 ## Benchmark positioning and extension protocol
 
-This is a **synthetic statistical diagnostic**, not a machine-learning benchmark. It therefore does not claim a state-of-the-art score or compare its rejection rates with ESG text-classification, question-answering, rating, or empirical-association results. The task definition, three scope-qualified ESG resources, non-comparable related-work table, internal calibration gaps, tested code optimizations, planned ablations, fixed comparison settings, future data-path recommendations, release templates, and physical delivery checklist are documented in [`docs/BENCHMARK_AND_EXPERIMENT_PROTOCOL.md`](docs/BENCHMARK_AND_EXPERIMENT_PROTOCOL.md).
+This is a **synthetic statistical diagnostic**, not a machine-learning benchmark. It therefore does not claim a state-of-the-art score or compare its rejection rates with ESG text-classification, question-answering, rating, or empirical-association results. The task definition, three scope-qualified ESG resources, non-comparable related-work table, internal calibration gaps, tested code optimizations, planned ablations, fixed comparison settings, future data-path recommendations, release templates, and physical delivery checklist are documented in [`docs/BENCHMARK_AND_EXPERIMENT_PROTOCOL.md`](docs/BENCHMARK_AND_EXPERIMENT_PROTOCOL.md). The directly paired firm-versus-two-way comparison—its joint-replication definition, MCSE, interval, public aggregate table, figure, and private-record boundary—is documented in [`docs/PAIRED_CLUSTER_DIAGNOSTIC.md`](docs/PAIRED_CLUSTER_DIAGNOSTIC.md).
 
 ## Data, license, and release boundary
 
