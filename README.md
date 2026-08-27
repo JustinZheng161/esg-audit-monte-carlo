@@ -104,6 +104,10 @@ Binary rejection-rate MCSEs are computed from all pooled outer repetitions as \(
 
 For the oracle DGP deviation \(u^*=\sigma(X)z\), with a standard-normal innovation independent of \(X\), \(E[\log|u^*|\mid X]=\log\sigma(X)+E[\log|z|]\). This explains the oracle scale mapping only under the stated DGP and exposure transformation. Estimated-residual coefficients may differ because of first-stage estimation, finite samples, fixed effects, standardization, and selective availability.
 
+## Benchmark positioning and extension protocol
+
+This is a **synthetic statistical diagnostic**, not a machine-learning benchmark. It therefore does not claim a state-of-the-art score or compare its rejection rates with ESG text-classification, question-answering, rating, or empirical-association results. The task definition, three scope-qualified ESG resources, non-comparable related-work table, internal calibration gaps, tested code optimizations, planned ablations, fixed comparison settings, future data-path recommendations, release templates, and physical delivery checklist are documented in [`docs/BENCHMARK_AND_EXPERIMENT_PROTOCOL.md`](docs/BENCHMARK_AND_EXPERIMENT_PROTOCOL.md).
+
 ## Data, license, and release boundary
 
 All reported observations are synthetic. The public release intentionally excludes manuscript DOCX/PDF files, full seed-level outputs, replicate-level rows, raw SEC files, restricted ESG data, credentials, and private review materials. See [`docs/REPOSITORY_BOUNDARY.md`](docs/REPOSITORY_BOUNDARY.md) for the exact whitelist, prohibited patterns, sync procedure, and required clean-clone verification.
