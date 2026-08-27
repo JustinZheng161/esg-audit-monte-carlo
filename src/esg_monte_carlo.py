@@ -232,21 +232,36 @@ def fit_second_stage(use: pd.DataFrame, outcome: str = "log_inefficiency", expos
 
 
 def restricted_wild_cluster_bootstrap(fit: dict, firm: np.ndarray, replications: int, seed: int) -> float:
-    """Restricted Rademacher wild cluster bootstrap-t p-value for the interaction coefficient."""
+    """Restricted Rademacher wild cluster bootstrap-t p-value for the interaction coefficient.
+
+    The coefficient bread, firm inverse index, and CR1 correction are invariant over
+    bootstrap draws and are cached outside the inner loop. This preserves the
+    statistic while avoiding repeated decompositions and group encoding; see the
+    computational rationale for fast wild bootstrap implementations in Roodman et
+    al. (2019), https://doi.org/10.1177/1536867X19830877.
+    """
     rng = np.random.default_rng(seed)
     xd, yd = fit["xd"], fit["yd"]
     x_restricted = xd[:, :2]
     beta_restricted = np.linalg.pinv(x_restricted.T @ x_restricted) @ (x_restricted.T @ yd)
     residual_restricted = yd - x_restricted @ beta_restricted
+    restricted_mean = x_restricted @ beta_restricted
     observed_t = float(fit["t"][2])
     _, inverse = np.unique(firm, return_inverse=True)
+    clusters = int(inverse.max() + 1)
+    n, k = xd.shape
+    bread = np.linalg.pinv(xd.T @ xd)
+    cr1_correction = (clusters / (clusters - 1)) * ((n - 1) / (n - k))
     extreme = 0
     for _ in range(replications):
-        weights = rng.choice(np.array([-1.0, 1.0]), size=int(inverse.max() + 1))
-        y_star = x_restricted @ beta_restricted + residual_restricted * weights[inverse]
-        beta = np.linalg.pinv(xd.T @ xd) @ (xd.T @ y_star)
+        weights = rng.choice(np.array([-1.0, 1.0]), size=clusters)
+        y_star = restricted_mean + residual_restricted * weights[inverse]
+        beta = bread @ (xd.T @ y_star)
         residual = y_star - xd @ beta
-        se = math.sqrt(max(one_way_covariance(xd, residual, firm)[2, 2], 1e-14))
+        scores = np.zeros((clusters, k), dtype=float)
+        np.add.at(scores, inverse, xd * residual[:, None])
+        covariance = bread @ (scores.T @ scores) @ bread * cr1_correction
+        se = math.sqrt(max(covariance[2, 2], 1e-14))
         t_star = beta[2] / se
         extreme += int(abs(t_star) >= abs(observed_t))
     return float((extreme + 1) / (replications + 1))

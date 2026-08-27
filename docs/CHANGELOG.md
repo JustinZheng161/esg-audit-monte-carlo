@@ -70,3 +70,17 @@ The first cross-seed aggregation grouped only by scenario label. Because `Null` 
 | Manuscript rendering | Checked after DOCX-to-PDF conversion; a cross-page table issue was fixed and rechecked. |
 
 The original data/analysis code was not provided, so no claim is made that these files reproduce an unavailable prior implementation byte-for-byte.
+
+
+## Performance optimization: cached wild-bootstrap algebra
+
+The pre-optimization bootstrap loop recomputed the OLS bread matrix and firm-group inverse index for every bootstrap draw. The revised implementation caches the coefficient bread, the restricted fitted mean, the firm inverse encoding, the number of clusters, and the CR1 finite-sample correction outside the inner loop. Each draw now recomputes only its bootstrap response, coefficient score, and residual score aggregation.
+
+| Patch | Replaced bottleneck | Validation | Result |
+|---|---|---|---|
+| Cache invariant linear-algebra and cluster encoding in `restricted_wild_cluster_bootstrap` | Per-draw `pinv(X'X)`, `np.unique(firm)`, and covariance helper setup | Exact p-value equivalence test against the legacy loop for an identical synthetic draw and seed | Passed |
+| Add `tests/benchmark_bootstrap.py` | No performance guardrail | 399-draw N=300 microbenchmark on the supplied Linux environment | Legacy: 0.111737 s; cached: 0.057006 s; **1.960×** speed-up; p-value identical (0.650000) |
+
+This patch is motivated by the computational structure of fast wild-bootstrap implementations described by Roodman, MacKinnon, Nielsen, and Webb (2019), who note that wild-bootstrap inference is particularly amenable to computational optimization. Source: https://doi.org/10.1177/1536867X19830877.
+
+A second recommended scale-out patch, not required for the current N≤500 runs, is to replace the generic alternating-projection demeaning function with a sparse, accelerated high-dimensional fixed-effect solver while preserving the Frisch–Waugh–Lovell residualization target. Guimarães and Portugal (2010) describe an iterative approach for high-dimensional fixed effects with low memory requirements; Correia (2016) develops symmetric projections and conjugate-gradient acceleration. Sources: https://www.iza.org/publications/dp/3935/a-simple-feasible-alternative-procedure-to-estimate-models-with-high-dimensional-fixed-effects and https://scorreia.com/research/hdfe.pdf.

@@ -21,16 +21,22 @@
 | M2 | Richardson (2006) | 过度投资与自由现金流的研究框架 | 支撑正常投资方程的企业投资文献定位 | [DOI](https://doi.org/10.1007/s11142-006-9012-3) |
 | M3 | Cameron, Gelbach & Miller (2008) | 少簇环境下常规渐近检验可能过度拒绝；提出 cluster bootstrap-t 改进 | 用于设计 bootstrap 与尺寸校准对照，而不是预设某一自助法必然有效 | [DOI](https://doi.org/10.1162/rest.90.3.414) |
 | M4 | Cameron & Miller (2015) | 聚类稳健推断涉及少簇、多维聚类、固定效应等实际复杂情形 | 支撑将 firm clustering 设为基线、将 eight-year two-way clustering 作为待校准对象 | [论文 PDF](https://cameron.econ.ucdavis.edu/research/Cameron_Miller_JHR_2014_July_09.pdf) |
-| M5 | Hounyo & Lin (2026) | 给出允许串行相关时间效应的多维 wild bootstrap 推断，并报告模拟证据 | 用于新增多维 wild bootstrap 稳健性试验，取代“pairs bootstrap 自动纠偏”的不充分表述 | [DOI](https://doi.org/10.1080/07350015.2025.2546454) |
+| M5 | Hounyo & Lin (2026) | 给出允许串行相关时间效应的多维 wild bootstrap 推断，并报告模拟证据 | 用于说明为何 eight-year two-way clustering 需要校准；本交付只实现并校准受限企业层 bootstrap，未把它虚称为多维 bootstrap | [DOI](https://doi.org/10.1080/07350015.2025.2546454) |
 | M6 | Xue (2025), *The Accounting Review* | 理论分析 ESG 披露精度、市场力量与投资；已正式刊于 TAR 100(5), 439–467 | 作为最新高水平研究定位，不能与本蒙特卡洛设计做性能/SOTA排序 | [DOI](https://doi.org/10.2308/TAR-2023-0707) |
 | M7 | Owino, Mathuva & Mangena (2026), *JAAR* | 系统综述 2000–2023 年 92 篇经同行评审文献，并指出跨研究设计差异会影响 ESG—投资效率证据 | 支撑本文将“设计诊断”与“实证结论”严格分离的动机 | [DOI](https://doi.org/10.1108/JAAR-03-2025-0099) |
 | M8 | Xu, Hay & Harrison (2026), *Accounting & Finance* | 系统综述 2004–2024 文献，将可持续鉴证质量指标组织为投入、过程、输出、背景与后果 | 支撑用 Big Four 之外的审计/鉴证质量替代指标进行稳健性设计 | [DOI](https://doi.org/10.1111/acfi.70196) |
 | M9 | Wang, Yu & Li (2022), *Frontiers in Psychology* | 使用 2011–2020 中国 A 股样本、Bloomberg ESG，讨论 ESG、审计质量与投资效率的关联 | 仅作为原稿主题的实证先行研究；不复制其数据或将其关系宣称为本模拟的结果 | [DOI](https://doi.org/10.3389/fpsyg.2022.948674) |
 | M10 | Zheng et al. (2025), *European Journal of Finance* | 使用中国和美国银行面板，检验 ESG、投资效率与环境不确定性；正式发表信息可核验 | 作为近期跨市场实证背景；不用于校准本项目 DGP 的参数 | [DOI](https://doi.org/10.1080/1351847X.2025.2585972) |
+| M11 | Roodman, MacKinnon, Nielsen & Webb (2019), *The Stata Journal* | 讨论快速 wild bootstrap 的计算结构，并说明其适于优化 | 支撑缓存固定矩阵、固定分组编码和 CR1 修正的已实现性能补丁 | [DOI](https://doi.org/10.1177/1536867X19830877) |
+| M12 | Guimarães & Portugal (2010), *The Stata Journal* | 给出低内存的高维固定效应迭代估计方案 | 支撑未来替换通用交替投影的 scale-out 方案 | [IZA 页面](https://www.iza.org/publications/dp/3935/a-simple-feasible-alternative-procedure-to-estimate-models-with-high-dimensional-fixed-effects) |
+| M13 | Correia (2016) | 提出多维固定效应的可行高效估计，结合对称投影与共轭梯度加速 | 支撑未来稀疏 FWL 固定效应求解器补丁 | [工作论文](https://scorreia.com/research/hdfe.pdf) |
+| M14 | Paolone & Bitbol-Saba (2025), *Measuring Business Excellence* | 系统综述/文献计量识别 ESG 会计研究的主题簇 | 作为近年 ESG 会计研究地图 | [DOI](https://doi.org/10.1108/MBE-09-2024-0157) |
+| M15 | Alfify & Sharaf-Addin (2026), *Sustainable Development* | PRISMA 系统综述审计质量与 ESG 公司绩效；初筛 522 篇、最终纳入 37 篇 | 作为审计质量/ESG 的近年综述 | [DOI](https://doi.org/10.1002/sd.70783) |
+| M16 | Adardour et al. (2026), *Journal of Financial Reporting and Accounting* | ESG 表现与公司风险系统综述，纳入 75 篇同行评审研究 | 作为 ESG 度量与情境异质性的近年研究地图 | [DOI](https://doi.org/10.1108/JFRA-05-2025-0343) |
 
 ## C. 文献更新建议
 
-原稿已具有多篇经典投资效率与聚类推断文献，但缺少近两年的领域地图。建议新增 M5–M10，并在参考文献中分别注明其角色：**方法推断（M5）、主题综述（M7–M8）、高水平理论定位（M6）、近期实证背景（M9–M10）**。不将它们称为“模型 SOTA”，因为本文是统计诊断而非机器学习基准任务。
+原稿已具有多篇经典投资效率与聚类推断文献，但缺少近两年的领域地图。修订稿现已纳入 M5–M16，并在参考文献中注明其角色：**方法推断（M5、M11–M13）、主题综述（M7–M8、M14–M16）、高水平理论定位（M6）、近期实证背景（M9–M10）**。不将它们称为“模型 SOTA”，因为本文是统计诊断而非机器学习基准任务。
 
 ## D. 来源核验限制
 
