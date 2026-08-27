@@ -10,7 +10,7 @@ The implementation reflects two methodological cautions. First, cluster-robust p
 
 ## Key findings from the canonical run
 
-The canonical outputs use master seed `20260827`, 1,000 primary repetitions, 300 sensitivity repetitions, and 399 restricted Rademacher wild-bootstrap draws where indicated. A separate full run with master seed `20260828` serves as an independent reproducibility check.
+The canonical outputs use master seed `20260827`, 1,000 primary repetitions, 300 sensitivity repetitions, and 399 restricted Rademacher wild-bootstrap draws where indicated. A separate full run with master seed `20260828` serves as an independent reproducibility check. The review-extension outputs additionally pool two independent 500-repetition seeds for an 8/18/28-time-cluster gradient and a Big Four selection-versus-direct-variance mechanism ablation.
 
 | Design | Metric | Canonical result | Independent-seed pooled check | Interpretation |
 |---|---:|---:|---:|---|
@@ -19,6 +19,8 @@ The canonical outputs use master seed `20260827`, 1,000 primary repetitions, 300
 | N=300 null | Restricted firm wild-bootstrap 5% rejection rate | 0.067 (MCSE 0.014) | 0.055 (MCSE 0.009; 600 outer repetitions) | Closer to nominal, but still a calibrated diagnostic rather than a guarantee. |
 | N=300 full alternative | Firm-clustered 5% rejection rate | 0.241 (MCSE 0.014) | 0.234 (MCSE 0.009; 2,000 repetitions) | Modest power. |
 | N=500 full alternative | Firm-clustered 5% rejection rate | 0.407 (MCSE 0.028) | 0.412 (MCSE 0.020; 600 repetitions) | Larger cross-section raises power. |
+| 8/18/28 time clusters, null DGP | Two-way 5% rejection rate | — | 0.086 / 0.076 / 0.070 (MCSE 0.009 / 0.008 / 0.008; 1,000 repetitions each) | Longer time dimension improves but does not fully calibrate two-way inference in this DGP. |
+| Big Four selection-only ablation | Firm-clustered interaction rejection | — | 0.056 (MCSE 0.007; 1,000 repetitions) | Preserving selection while removing the direct variance role yields near-null firm-clustered rejection. |
 
 ## Repository layout
 
@@ -35,15 +37,20 @@ The canonical outputs use master seed `20260827`, 1,000 primary repetitions, 300
 │   ├── EXPERIMENT_REPORT.md            # Results and interpretation
 │   └── REPOSITORY_BOUNDARY.md          # Public/private release rules
 ├── outputs/
-│   ├── figures/                        # Publication-ready PNG figures
-│   └── tables/                         # Aggregate CSV result tables
+│   ├── figures/                        # Canonical publication-ready PNG figures
+│   ├── tables/                         # Canonical aggregate CSV result tables
+│   └── reviewer_diagnostics_pooled/    # Pooled Tables 8–9 and Figures 2–3
 ├── src/
 │   ├── esg_monte_carlo.py              # DGP, estimation, diagnostics, and figures
-│   ├── collect_sec_metadata.py         # Optional public-source metadata collector
-│   ├── compare_runs.py                 # Independent-seed aggregation
-│   └── build_revised_manuscript.py     # Private manuscript builder; ignored on release
+│   ├── run_reviewer_diagnostics.py     # Time-cluster and Big Four mechanism extensions
+│   ├── aggregate_reviewer_diagnostics.py # Correct independent-seed pooling
+│   ├── plot_pooled_reviewer_diagnostics.py # Pooled Figures 2–3
+│   ├── collect_sec_metadata.py         # Optional metadata tool; not used in reported analysis
+│   ├── compare_runs.py                 # Canonical independent-seed aggregation
+│   └── build_revised_manuscript.py     # Private manuscript builder; excluded from public release
 ├── tests/
-│   └── test_pipeline.py                # Deterministic pipeline checks
+│   ├── test_pipeline.py                # Deterministic pipeline and observation-flow checks
+│   └── benchmark_bootstrap.py          # Cached vs. legacy bootstrap equivalence benchmark
 ├── requirements.txt
 ├── .gitignore
 └── LICENSE
@@ -69,13 +76,26 @@ python src/compare_runs.py \
   outputs/final_run_calibrated/tables/table_2_monte_carlo_operating_characteristics.csv \
   outputs/validation_seed_20260828/tables/table_2_monte_carlo_operating_characteristics.csv \
   outputs/final_run_calibrated/tables/table_4_independent_seed_crosscheck.csv
+
+# Reviewer-requested time-cluster and Big Four mechanism extensions
+python src/run_reviewer_diagnostics.py --reps 500 --year-grid 10 20 30 \
+  --seed 20260827 --output outputs/reviewer_diagnostics_seed_20260827
+python src/run_reviewer_diagnostics.py --reps 500 --year-grid 10 20 30 \
+  --seed 20260828 --output outputs/reviewer_diagnostics_seed_20260828
+python src/aggregate_reviewer_diagnostics.py \
+  outputs/reviewer_diagnostics_seed_20260827 \
+  outputs/reviewer_diagnostics_seed_20260828 \
+  --output outputs/reviewer_diagnostics_pooled
+python src/plot_pooled_reviewer_diagnostics.py \
+  --input outputs/reviewer_diagnostics_pooled \
+  --output outputs/reviewer_diagnostics_pooled/figures
 ```
 
 Expected execution time in the supplied Linux environment is about four minutes per complete seed run. Every invocation writes `manifest.json` containing the configuration hash, package versions, seeds, and run counts.
 
 ## Data governance and source policy
 
-The current study has **no external empirical data dependency**. All analysis observations are generated locally from `config/dgp.yaml`. For a future empirical extension, `src/collect_sec_metadata.py` can retrieve a small metadata snapshot from the U.S. SEC EDGAR Company Facts API. The SEC describes this interface as providing filings history and XBRL facts in JSON without an API key [4]. The public repository retains only a manifest of source URLs and SHA-256 hashes; raw responses are deliberately excluded.
+The current study has **no external empirical data dependency**. All analysis observations are generated locally from `config/dgp.yaml`, which is the single source of truth for every disclosed DGP parameter. The optional `src/collect_sec_metadata.py` utility is not invoked by any reported experiment, calibration, table, or figure. It is retained only as a separately documented future-extension utility; raw responses are deliberately excluded from the public repository. The SEC describes the underlying interface as providing filing history and XBRL facts in JSON without an API key [4].
 
 ESG vendor data must not be silently substituted or redistributed. For example, LSEG reports broad ESG coverage but explicitly restricts systematic reproduction and redistribution without a license [5]. Raw CSMAR, Wind, Bloomberg, Refinitiv, MSCI, Sustainalytics, and similar commercial data belong in a controlled private environment. The repository documents the data dictionary and acquisition protocol but does not ship the licensed records.
 

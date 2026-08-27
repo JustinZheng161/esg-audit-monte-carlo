@@ -1,0 +1,4 @@
+dgp_years,analysis_time_clusters,independent_runs,total_repetitions,firm_rejection_5pct,firm_rejection_5pct_pooled_mcse,two_way_rejection_5pct,two_way_rejection_5pct_pooled_mcse,mean_interaction,mean_n_obs,first_stage_n,second_stage_n,big4_variance_scale,effect_scale
+10,8,2,1000,0.053,0.00708456067798138,0.086,0.008865889690267977,0.0065857883243643,2400.0,3000,2400,1.0,0.0
+20,18,2,1000,0.061,0.0075682891065286355,0.076,0.008379976133617566,-0.0023654489895016,5400.0,6000,5400,1.0,0.0
+30,28,2,1000,0.055,0.00720936890441875,0.07,0.008068457101577725,0.0044782238657371,8400.0,9000,8400,1.0,0.0

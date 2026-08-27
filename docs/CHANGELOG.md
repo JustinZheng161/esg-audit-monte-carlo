@@ -84,3 +84,15 @@ The pre-optimization bootstrap loop recomputed the OLS bread matrix and firm-gro
 This patch is motivated by the computational structure of fast wild-bootstrap implementations described by Roodman, MacKinnon, Nielsen, and Webb (2019), who note that wild-bootstrap inference is particularly amenable to computational optimization. Source: https://doi.org/10.1177/1536867X19830877.
 
 A second recommended scale-out patch, not required for the current N≤500 runs, is to replace the generic alternating-projection demeaning function with a sparse, accelerated high-dimensional fixed-effect solver while preserving the Frisch–Waugh–Lovell residualization target. Guimarães and Portugal (2010) describe an iterative approach for high-dimensional fixed effects with low memory requirements; Correia (2016) develops symmetric projections and conjugate-gradient acceleration. Sources: https://www.iza.org/publications/dp/3935/a-simple-feasible-alternative-procedure-to-estimate-models-with-high-dimensional-fixed-effects and https://scorreia.com/research/hdfe.pdf.
+
+## 2026-08-27 — First-round reviewer revision
+
+| Review issue | Before | After | Verification |
+|---|---|---|---|
+| Main effective N | Text could be read without a full observation flow; review memo cited an unexplained N=2,000. | New Table 3 specifies 3,000 raw/first-stage rows, 2,700 post-lag rows, 2,400 main second-stage rows, and 2,169 only for MAR-like stress. | `tests/test_pipeline.py`; regenerated Tables 5–7. |
+| DGP transparency | Several DGP constants appeared only as code literals. | All generating constants are explicit in `config/dgp.yaml`; the manuscript Table 1 is derived from this single source of truth. | Configuration-completeness test; anonymous DOCX visual check. |
+| MCSE disclosure | Result tables displayed parenthetical MCSE without an explicit in-text formula. | Section 2.2 and Section 3 define `sqrt[p̂(1−p̂)/R]`; pooled tables use combined rejection counts and total R. | Canonical formula assertion and CSV/table cross-check. |
+| Few time clusters | Eight analysis years were described as a stress diagnostic without a time-dimension gradient. | Two independent 500-repetition seeds run 8/18/28 analysis time clusters; Table 8/Figure 2 report pooled size and MCSE. | `outputs/reviewer_diagnostics_pooled/`. |
+| Big Four construct | Direct residual-variance interaction and the proxy limitation were not separately tested. | The DGP now accepts `big4_variance_scale`; Table 9/Figure 3 contrast direct-role and selection-only conditions. | Deterministic selection/ESG-stream equivalence test; two independent pooled runs. |
+| SEC metadata wording | Manuscript mentioned an unused company metadata snapshot. | Anonymous paper now states that no real-company financial, ESG, audit, regulatory, or commercial records enter analysis. | Data/code availability statements and public-boundary scan. |
+| Anonymous CRediT | Narrative statement included `manuscript editing assistance`. | Standard anonymized CRediT role statement only. | Anonymous-text scan and final DOCX review. |

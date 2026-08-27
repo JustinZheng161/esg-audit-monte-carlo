@@ -14,17 +14,6 @@ simulation:
   primary_repetitions: 1000
   sensitivity_repetitions: 300
   bootstrap_replications: 399
-  base_sigma: 0.032
-  esg_innovation_sd: 3.8
-  esg_persistence: 0.95
-  esg_lower: 0.0
-  esg_upper: 100.0
-  full_effect:
-    esg_log_sd: -0.10
-    esg_big4_log_sd: -0.12
-  half_effect:
-    esg_log_sd: -0.05
-    esg_big4_log_sd: -0.06
 
 estimation:
   analysis_years: [2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023]
@@ -44,3 +33,88 @@ robustness:
 publication:
   public_assets: [source_code, config, synthetic_example, aggregate_tables, figures, documentation]
   private_assets: [manuscript_docx, full_simulation_outputs, raw_or_licensed_inputs, audit_logs]
+
+# Every parameter below is illustrative for the diagnostic pipeline and is not
+# calibrated to a real-company population.
+dgp:
+  latent_variables:
+    quality_sd: 1.0
+    opportunity_sd: 1.0
+    size_latent_sd: 1.0
+    risk_sd: 1.0
+    network_intercept: -0.10
+    network_industry_slope: 0.25
+    firm_effect_opportunity: 0.006
+    firm_effect_innovation_sd: 0.004
+    initial_investment: 0.12
+    initial_age_low_inclusive: 3
+    initial_age_high_exclusive: 36
+  esg:
+    long_run_mean: 60.0
+    persistence: 0.95
+    innovation_sd: 3.8
+    lower: 0.0
+    upper: 100.0
+    initial_quality_coefficient: 5.0
+    initial_industry_coefficient: 0.35
+    initial_innovation_sd: 3.8
+    quality_coefficient: 0.90
+    industry_coefficient: 0.35
+    time_trend: 0.55
+  big4_selection:
+    intercept: -2.80
+    quality_coefficient: 0.90
+    size_coefficient: 0.25
+    esg_coefficient_per_10_points: 0.06
+    risk_coefficient: -0.15
+    roa_coefficient: 0.35
+    network_coefficient: 0.70
+    initial_roa_assumption: 0.04
+  covariates:
+    q_intercept: 1.25
+    q_opportunity_coefficient: 0.45
+    q_quality_coefficient: 0.18
+    q_time_trend: 0.06
+    q_innovation_sd: 0.30
+    growth_intercept: 0.06
+    growth_opportunity_coefficient: 0.10
+    growth_quality_coefficient: 0.02
+    growth_innovation_sd: 0.08
+    cash_intercept: -1.00
+    cash_quality_coefficient: 0.24
+    cash_risk_coefficient: -0.22
+    cash_innovation_sd: 0.50
+    leverage_intercept: -0.25
+    leverage_risk_coefficient: 0.34
+    leverage_quality_coefficient: -0.10
+    leverage_innovation_sd: 0.45
+    roa_intercept: 0.04
+    roa_quality_coefficient: 0.025
+    roa_risk_coefficient: -0.012
+    roa_innovation_sd: 0.018
+    cfo_intercept: 0.045
+    cfo_roa_coefficient: 0.050
+    cfo_opportunity_coefficient: 0.018
+    cfo_innovation_sd: 0.018
+  investment_equation:
+    intercept: 0.025
+    growth_coefficient: 0.075
+    cfo_assets_coefficient: 0.23
+    q_coefficient: 0.070
+    cash_coefficient: 0.035
+    leverage_coefficient: -0.018
+    industry_coefficient: 0.004
+    lagged_investment_coefficient: 0.035
+    time_trend: 0.001
+  log_sigma_mapping:
+    base_sigma: 0.032
+    esg_standardization: "all-firm-year DGP sample z-score"
+    null:
+      esg_log_sd: 0.0
+      esg_big4_log_sd: 0.0
+    half_alternative:
+      esg_log_sd: -0.05
+      esg_big4_log_sd: -0.06
+    full_alternative:
+      esg_log_sd: -0.10
+      esg_big4_log_sd: -0.12

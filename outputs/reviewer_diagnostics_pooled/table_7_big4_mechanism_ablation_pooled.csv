@@ -1,0 +1,3 @@
+scenario,big4_variance_scale,independent_runs,total_repetitions,firm_rejection_5pct,firm_rejection_5pct_pooled_mcse,two_way_rejection_5pct,two_way_rejection_5pct_pooled_mcse,mean_interaction,mean_n_obs,first_stage_n,second_stage_n,effect_scale
+Full alternative: Big Four direct variance role retained,1.0,2,1000,0.228,0.013267102170406317,0.255,0.013783141876945184,-0.0893752995373396,2400.0,3000,2400,1.0
+Selection-only: Big Four direct variance role set to zero,0.0,2,1000,0.056,0.007270763371201128,0.099,0.009444522221901964,-2.743031356589154e-05,2400.0,3000,2400,1.0

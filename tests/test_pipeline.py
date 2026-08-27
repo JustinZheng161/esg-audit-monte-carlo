@@ -9,6 +9,7 @@ sys.path.insert(0, str(ROOT / "src"))
 from esg_monte_carlo import (  # noqa: E402
     fit_second_stage,
     load_config,
+    mcse,
     one_way_covariance,
     restricted_wild_cluster_bootstrap,
     second_stage_data,
@@ -39,6 +40,10 @@ def legacy_wild_bootstrap(fit, firm, replications, seed):
 
 def main() -> None:
     cfg = load_config(ROOT / "config" / "dgp.yaml")
+    required_dgp_sections = {"latent_variables", "esg", "big4_selection", "covariates", "investment_equation", "log_sigma_mapping"}
+    assert required_dgp_sections.issubset(cfg["dgp"]), "DGP parameter disclosure is incomplete."
+    assert cfg["dgp"]["esg"]["persistence"] == 0.95
+    assert cfg["dgp"]["log_sigma_mapping"]["full_alternative"]["esg_big4_log_sd"] == -0.12
     df = simulate_panel(seed=314159, n_firms=30, effect_scale=1.0, cfg=cfg)
     assert len(df) == 30 * len(cfg["project"]["years"])
     assert df["firm"].nunique() == 30
@@ -47,7 +52,18 @@ def main() -> None:
 
     analysis = second_stage_data(df)
     assert len(analysis) == 30 * (len(cfg["project"]["years"]) - 2)
+    assert analysis["year"].min() == cfg["project"]["years"][1]
+    assert analysis["year"].max() == cfg["project"]["years"][-2]
+    assert sorted(analysis["year"].unique().tolist()) == cfg["estimation"]["analysis_years"]
     assert np.isfinite(analysis[["inefficiency", "log_inefficiency", "esg_lag"]].to_numpy()).all()
+    assert mcse(0.05, 1000) == np.sqrt(0.05 * 0.95 / 1000)
+
+    # The mechanism ablation preserves selection/ESG streams but removes only the
+    # Big Four direct variance interaction from the synthetic DGP.
+    selection_only = simulate_panel(seed=314159, n_firms=30, effect_scale=1.0, cfg=cfg, big4_variance_scale=0.0)
+    assert np.array_equal(df["big4"].to_numpy(), selection_only["big4"].to_numpy())
+    assert np.array_equal(df["esg"].to_numpy(), selection_only["esg"].to_numpy())
+    assert not np.array_equal(df["true_deviation"].to_numpy(), selection_only["true_deviation"].to_numpy())
 
     fitted = fit_second_stage(analysis, covariance="firm")
     assert fitted["beta"].shape == (3,)

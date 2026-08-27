@@ -101,59 +101,87 @@ def fit_fe_ols(y: np.ndarray, x: np.ndarray, fe_groups: list[np.ndarray], firm: 
     return {"beta": beta, "se": se, "t": t_values, "p": p_values, "residual": residual, "yd": yd, "xd": xd}
 
 
-def simulate_panel(seed: int, n_firms: int, effect_scale: float, cfg: dict) -> pd.DataFrame:
+def simulate_panel(seed: int, n_firms: int, effect_scale: float, cfg: dict,
+                   big4_variance_scale: float = 1.0) -> pd.DataFrame:
     rng = np.random.default_rng(seed)
     years = np.asarray(cfg["project"]["years"], dtype=int)
     t_count = len(years)
     industries = int(cfg["panel"]["industries"])
-    base_sigma = float(cfg["simulation"]["base_sigma"])
-    full = cfg["simulation"]["full_effect"]
+    dgp = cfg["dgp"]
+    latent, esg_cfg = dgp["latent_variables"], dgp["esg"]
+    big4_cfg, covariates = dgp["big4_selection"], dgp["covariates"]
+    investment_cfg, sigma_cfg = dgp["investment_equation"], dgp["log_sigma_mapping"]
+    base_sigma = float(sigma_cfg["base_sigma"])
+    full = sigma_cfg["full_alternative"]
     beta_esg = effect_scale * float(full["esg_log_sd"])
-    beta_inter = effect_scale * float(full["esg_big4_log_sd"])
+    beta_inter = effect_scale * float(full["esg_big4_log_sd"]) * float(big4_variance_scale)
 
     firm = np.arange(n_firms)
     industry = rng.integers(0, industries, size=n_firms)
-    quality = rng.normal(0, 1, size=n_firms)
-    opportunity = rng.normal(0, 1, size=n_firms)
-    size_latent = rng.normal(0, 1, size=n_firms)
-    risk = rng.normal(0, 1, size=n_firms)
-    network = rng.binomial(1, sigmoid(-0.1 + 0.25 * (industry - (industries - 1) / 2.0)))
-    firm_effect = 0.006 * opportunity + rng.normal(0, 0.004, size=n_firms)
-    age0 = rng.integers(3, 36, size=n_firms)
+    quality = rng.normal(0, float(latent["quality_sd"]), size=n_firms)
+    opportunity = rng.normal(0, float(latent["opportunity_sd"]), size=n_firms)
+    size_latent = rng.normal(0, float(latent["size_latent_sd"]), size=n_firms)
+    risk = rng.normal(0, float(latent["risk_sd"]), size=n_firms)
+    network = rng.binomial(1, sigmoid(float(latent["network_intercept"]) + float(latent["network_industry_slope"]) * (industry - (industries - 1) / 2.0)))
+    firm_effect = float(latent["firm_effect_opportunity"]) * opportunity + rng.normal(0, float(latent["firm_effect_innovation_sd"]), size=n_firms)
+    age0 = rng.integers(int(latent["initial_age_low_inclusive"]), int(latent["initial_age_high_exclusive"]), size=n_firms)
 
     esg = np.empty((n_firms, t_count), dtype=float)
-    esg[:, 0] = np.clip(60 + 5.0 * quality + 0.35 * (industry - (industries - 1) / 2.0)
-                        + rng.normal(0, 3.8, n_firms), 0, 100)
+    esg[:, 0] = np.clip(float(esg_cfg["long_run_mean"]) + float(esg_cfg["initial_quality_coefficient"]) * quality + float(esg_cfg["initial_industry_coefficient"]) * (industry - (industries - 1) / 2.0)
+                        + rng.normal(0, float(esg_cfg["initial_innovation_sd"]), n_firms), float(esg_cfg["lower"]), float(esg_cfg["upper"]))
     for t in range(1, t_count):
         esg[:, t] = np.clip(
-            60 + float(cfg["simulation"]["esg_persistence"]) * (esg[:, t - 1] - 60)
-            + 0.90 * quality + 0.35 * (industry - (industries - 1) / 2.0) + 0.55 * t
-            + rng.normal(0, float(cfg["simulation"]["esg_innovation_sd"]), n_firms),
-            float(cfg["simulation"]["esg_lower"]), float(cfg["simulation"]["esg_upper"]),
+            float(esg_cfg["long_run_mean"]) + float(esg_cfg["persistence"]) * (esg[:, t - 1] - float(esg_cfg["long_run_mean"]))
+            + float(esg_cfg["quality_coefficient"]) * quality + float(esg_cfg["industry_coefficient"]) * (industry - (industries - 1) / 2.0) + float(esg_cfg["time_trend"]) * t
+            + rng.normal(0, float(esg_cfg["innovation_sd"]), n_firms),
+            float(esg_cfg["lower"]), float(esg_cfg["upper"]),
         )
 
     rows: list[dict] = []
     e_std = (esg - esg.mean()) / esg.std(ddof=0)
-    prior_investment = np.full(n_firms, 0.12)
+    prior_investment = np.full(n_firms, float(latent["initial_investment"]))
     # The variance DGP is deliberately indexed by the *lagged* ESG and Big Four
     # status used in the second-stage regression. This prevents a timing mismatch
     # from being mistaken for lack of statistical power.
-    big4_previous = rng.binomial(1, sigmoid(-2.80 + 0.90 * quality + 0.25 * size_latent
-                                             + 0.06 * ((esg[:, 0] - 60) / 10.0)
-                                             - 0.15 * risk + 0.35 * 0.04 + 0.70 * network))
+    big4_previous = rng.binomial(
+        1,
+        sigmoid(float(big4_cfg["intercept"]) + float(big4_cfg["quality_coefficient"]) * quality
+                + float(big4_cfg["size_coefficient"]) * size_latent
+                + float(big4_cfg["esg_coefficient_per_10_points"]) * ((esg[:, 0] - float(esg_cfg["long_run_mean"])) / 10.0)
+                + float(big4_cfg["risk_coefficient"]) * risk
+                + float(big4_cfg["roa_coefficient"]) * float(big4_cfg["initial_roa_assumption"])
+                + float(big4_cfg["network_coefficient"]) * network),
+    )
     for t, year in enumerate(years):
-        q = 1.25 + 0.45 * opportunity + 0.18 * quality + 0.06 * t + rng.normal(0, 0.30, n_firms)
-        growth = 0.06 + 0.10 * opportunity + 0.02 * quality + rng.normal(0, 0.08, n_firms)
-        cash = sigmoid(-1.00 + 0.24 * quality - 0.22 * risk + rng.normal(0, 0.50, n_firms))
-        leverage = sigmoid(-0.25 + 0.34 * risk - 0.10 * quality + rng.normal(0, 0.45, n_firms))
-        roa = 0.04 + 0.025 * quality - 0.012 * risk + rng.normal(0, 0.018, n_firms)
-        cfo_assets = 0.045 + 0.050 * roa + 0.018 * opportunity + rng.normal(0, 0.018, n_firms)
-        big4_p = sigmoid(-2.80 + 0.90 * quality + 0.25 * size_latent + 0.06 * ((esg[:, t] - 60) / 10.0)
-                         - 0.15 * risk + 0.35 * roa + 0.70 * network)
+        q = (float(covariates["q_intercept"]) + float(covariates["q_opportunity_coefficient"]) * opportunity
+             + float(covariates["q_quality_coefficient"]) * quality + float(covariates["q_time_trend"]) * t
+             + rng.normal(0, float(covariates["q_innovation_sd"]), n_firms))
+        growth = (float(covariates["growth_intercept"]) + float(covariates["growth_opportunity_coefficient"]) * opportunity
+                  + float(covariates["growth_quality_coefficient"]) * quality
+                  + rng.normal(0, float(covariates["growth_innovation_sd"]), n_firms))
+        cash = sigmoid(float(covariates["cash_intercept"]) + float(covariates["cash_quality_coefficient"]) * quality
+                       + float(covariates["cash_risk_coefficient"]) * risk
+                       + rng.normal(0, float(covariates["cash_innovation_sd"]), n_firms))
+        leverage = sigmoid(float(covariates["leverage_intercept"]) + float(covariates["leverage_risk_coefficient"]) * risk
+                           + float(covariates["leverage_quality_coefficient"]) * quality
+                           + rng.normal(0, float(covariates["leverage_innovation_sd"]), n_firms))
+        roa = (float(covariates["roa_intercept"]) + float(covariates["roa_quality_coefficient"]) * quality
+               + float(covariates["roa_risk_coefficient"]) * risk
+               + rng.normal(0, float(covariates["roa_innovation_sd"]), n_firms))
+        cfo_assets = (float(covariates["cfo_intercept"]) + float(covariates["cfo_roa_coefficient"]) * roa
+                      + float(covariates["cfo_opportunity_coefficient"]) * opportunity
+                      + rng.normal(0, float(covariates["cfo_innovation_sd"]), n_firms))
+        big4_p = sigmoid(float(big4_cfg["intercept"]) + float(big4_cfg["quality_coefficient"]) * quality
+                         + float(big4_cfg["size_coefficient"]) * size_latent
+                         + float(big4_cfg["esg_coefficient_per_10_points"]) * ((esg[:, t] - float(esg_cfg["long_run_mean"])) / 10.0)
+                         + float(big4_cfg["risk_coefficient"]) * risk + float(big4_cfg["roa_coefficient"]) * roa
+                         + float(big4_cfg["network_coefficient"]) * network)
         big4 = rng.binomial(1, big4_p)
-        normal_investment = (0.025 + 0.075 * growth + 0.23 * cfo_assets + 0.070 * q + 0.035 * cash
-                             - 0.018 * leverage + 0.004 * industry + 0.035 * prior_investment
-                             + firm_effect + 0.001 * t)
+        normal_investment = (float(investment_cfg["intercept"]) + float(investment_cfg["growth_coefficient"]) * growth
+                             + float(investment_cfg["cfo_assets_coefficient"]) * cfo_assets + float(investment_cfg["q_coefficient"]) * q
+                             + float(investment_cfg["cash_coefficient"]) * cash + float(investment_cfg["leverage_coefficient"]) * leverage
+                             + float(investment_cfg["industry_coefficient"]) * industry + float(investment_cfg["lagged_investment_coefficient"]) * prior_investment
+                             + firm_effect + float(investment_cfg["time_trend"]) * t)
         lag_index = max(t - 1, 0)
         log_sigma = (math.log(base_sigma) + beta_esg * e_std[:, lag_index]
                      + beta_inter * e_std[:, lag_index] * big4_previous)
@@ -267,8 +295,9 @@ def restricted_wild_cluster_bootstrap(fit: dict, firm: np.ndarray, replications:
     return float((extreme + 1) / (replications + 1))
 
 
-def one_replication(seed: int, n_firms: int, effect_scale: float, cfg: dict, wild_reps: int = 0) -> dict:
-    df = simulate_panel(seed, n_firms, effect_scale, cfg)
+def one_replication(seed: int, n_firms: int, effect_scale: float, cfg: dict, wild_reps: int = 0,
+                    big4_variance_scale: float = 1.0) -> dict:
+    df = simulate_panel(seed, n_firms, effect_scale, cfg, big4_variance_scale=big4_variance_scale)
     use = second_stage_data(df)
     main = fit_second_stage(use, covariance="firm")
     twoway = fit_second_stage(use, covariance="two_way")
@@ -284,16 +313,18 @@ def one_replication(seed: int, n_firms: int, effect_scale: float, cfg: dict, wil
 
 
 def monte_carlo(label: str, n_firms: int, effect_scale: float, repetitions: int, base_seed: int, cfg: dict,
-                wild_reps: int = 0) -> dict:
+                wild_reps: int = 0, big4_variance_scale: float = 1.0) -> dict:
     seeds = np.random.SeedSequence(base_seed).spawn(repetitions)
-    results = [one_replication(int(s.generate_state(1)[0]), n_firms, effect_scale, cfg, wild_reps) for s in seeds]
+    results = [one_replication(int(s.generate_state(1)[0]), n_firms, effect_scale, cfg, wild_reps, big4_variance_scale)
+               for s in seeds]
     p_firm = np.array([r["p_firm"] for r in results])
     p_two = np.array([r["p_two_way"] for r in results])
     reject = float(np.mean(p_firm < 0.05))
     reject_two = float(np.mean(p_two < 0.05))
     wild_reject = float(np.mean([r["p_wild_firm"] < 0.05 for r in results])) if wild_reps else np.nan
     return {
-        "scenario": label, "firms": n_firms, "effect_scale": effect_scale, "repetitions": repetitions,
+        "scenario": label, "firms": n_firms, "effect_scale": effect_scale,
+        "big4_variance_scale": big4_variance_scale, "repetitions": repetitions,
         "firm_rejection_5pct": reject, "firm_mcse": mcse(reject, repetitions),
         "two_way_rejection_5pct": reject_two, "two_way_mcse": mcse(reject_two, repetitions),
         "wild_firm_rejection_5pct": wild_reject,
