@@ -8,9 +8,11 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 from esg_monte_carlo import (  # noqa: E402
     fit_second_stage,
+    fit_second_stage_prepared,
     load_config,
     mcse,
     one_way_covariance,
+    prepare_second_stage,
     restricted_wild_cluster_bootstrap,
     second_stage_data,
     simulate_panel,
@@ -68,6 +70,11 @@ def main() -> None:
     assert not np.array_equal(df["true_deviation"].to_numpy(), selection_only["true_deviation"].to_numpy())
 
     fitted = fit_second_stage(analysis, covariance="firm")
+    prepared = prepare_second_stage(analysis)
+    prepared_fitted = fit_second_stage_prepared(prepared, covariance="firm")
+    assert np.allclose(fitted["beta"], prepared_fitted["beta"], rtol=1e-12, atol=1e-12)
+    assert np.allclose(fitted["se"], prepared_fitted["se"], rtol=1e-12, atol=1e-12)
+    assert np.allclose(fitted["p"], prepared_fitted["p"], rtol=1e-12, atol=1e-12)
     assert fitted["beta"].shape == (3,)
     assert np.isfinite(fitted["beta"]).all()
     assert np.isfinite(fitted["se"]).all()
@@ -75,9 +82,10 @@ def main() -> None:
 
     firm = analysis["firm"].to_numpy()
     wild_p = restricted_wild_cluster_bootstrap(fitted, firm, replications=19, seed=271828)
+    wild_p_scalar = restricted_wild_cluster_bootstrap(fitted, firm, replications=19, seed=271828, batch_size=1)
     legacy_p = legacy_wild_bootstrap(fitted, firm, replications=19, seed=271828)
     assert 0 < wild_p <= 1
-    assert wild_p == legacy_p, "Caching optimization changed the wild-bootstrap p-value."
+    assert wild_p == wild_p_scalar == legacy_p, "Batching changed the wild-bootstrap p-value."
     print("Pipeline tests passed.")
 
 

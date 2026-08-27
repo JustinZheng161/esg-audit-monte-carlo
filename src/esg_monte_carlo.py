@@ -7,6 +7,7 @@ config/dgp.yaml and every run writes tables, figures and a provenance manifest.
 from __future__ import annotations
 
 import argparse
+from dataclasses import dataclass
 import hashlib
 import json
 import math
@@ -23,6 +24,22 @@ import pandas as pd
 import yaml
 
 ROOT = Path(__file__).resolve().parents[1]
+
+
+@dataclass(frozen=True)
+class PreparedSecondStage:
+    """Fixed-effect-residualized regressors reused across outcomes and covariance choices.
+
+    This implements a Frisch–Waugh–Lovell-style reuse of the fixed-effect-projected
+    design matrix. Reusing the invariant regressor projection is computational only:
+    the outcome is residualized independently for every requested outcome.
+    """
+
+    local: pd.DataFrame
+    xd: np.ndarray
+    fe_groups: tuple[np.ndarray, ...]
+    firm: np.ndarray
+    year: np.ndarray
 
 
 def sigmoid(x: np.ndarray) -> np.ndarray:
@@ -82,8 +99,27 @@ def two_way_covariance(x: np.ndarray, residual: np.ndarray, firm: np.ndarray, ye
     return cov - np.diag(np.diag(cov)) + np.diag(diagonal)
 
 
+def fit_fe_ols_prepared(y: np.ndarray, xd: np.ndarray, fe_groups: tuple[np.ndarray, ...], firm: np.ndarray,
+                        year: np.ndarray, covariance: str = "firm") -> dict:
+    """Estimate an FE-OLS outcome using a previously residualized design matrix."""
+    yd = demean_matrix(np.asarray(y, dtype=float).reshape(-1, 1), list(fe_groups))[:, 0]
+    beta = np.linalg.pinv(xd.T @ xd) @ (xd.T @ yd)
+    residual = yd - xd @ beta
+    if covariance == "firm":
+        cov = one_way_covariance(xd, residual, firm)
+    elif covariance == "two_way":
+        cov = two_way_covariance(xd, residual, firm, year)
+    else:
+        raise ValueError(f"Unknown covariance type: {covariance}")
+    se = np.sqrt(np.maximum(np.diag(cov), 1e-14))
+    t_values = beta / se
+    p_values = np.array([pvalue_normal(t) for t in t_values])
+    return {"beta": beta, "se": se, "t": t_values, "p": p_values, "residual": residual, "yd": yd, "xd": xd}
+
+
 def fit_fe_ols(y: np.ndarray, x: np.ndarray, fe_groups: list[np.ndarray], firm: np.ndarray, year: np.ndarray,
                covariance: str = "firm") -> dict:
+    """Fit FE-OLS by residualizing the supplied outcome and regressor matrix together."""
     stacked = np.column_stack([y, x])
     residualized = demean_matrix(stacked, fe_groups)
     yd, xd = residualized[:, 0], residualized[:, 1:]
@@ -284,9 +320,14 @@ def circular_shift_by_firm(df: pd.DataFrame, column: str, seed: int) -> np.ndarr
     return shifted
 
 
-def fit_second_stage(use: pd.DataFrame, outcome: str = "log_inefficiency", exposure: str = "esg_lag",
-                     covariance: str = "firm", placebo_seed: int | None = None,
-                     standardize_exposure: bool = True) -> dict:
+def prepare_second_stage(use: pd.DataFrame, exposure: str = "esg_lag", placebo_seed: int | None = None,
+                         standardize_exposure: bool = True) -> PreparedSecondStage:
+    """Build and fixed-effect-residualize the invariant second-stage regressor design.
+
+    The design is reusable only for the same analysis rows, exposure transformation,
+    standardization rule, and fixed-effect specification. Outcomes are deliberately
+    excluded here and residualized separately by :func:`fit_second_stage_prepared`.
+    """
     local = use.copy()
     if exposure == "circular_esg":
         if placebo_seed is None:
@@ -303,21 +344,47 @@ def fit_second_stage(use: pd.DataFrame, outcome: str = "log_inefficiency", expos
     else:
         local["exposure_z"] = local["exposure"]
     local["interaction"] = local["exposure_z"] * local["big4_lag"]
-    y = local[outcome].to_numpy()
+    firm = local["firm"].to_numpy()
+    year = local["year"].to_numpy()
+    fe_groups = (firm, local["industry_year"].to_numpy())
     x = local[["exposure_z", "big4_lag", "interaction"]].to_numpy()
-    return fit_fe_ols(y, x, [local["firm"].to_numpy(), local["industry_year"].to_numpy()],
-                      local["firm"].to_numpy(), local["year"].to_numpy(), covariance)
+    xd = demean_matrix(x, list(fe_groups))
+    return PreparedSecondStage(local=local, xd=xd, fe_groups=fe_groups, firm=firm, year=year)
 
 
-def restricted_wild_cluster_bootstrap(fit: dict, firm: np.ndarray, replications: int, seed: int) -> float:
+def fit_second_stage_prepared(prepared: PreparedSecondStage, outcome: str = "log_inefficiency",
+                              covariance: str = "firm") -> dict:
+    """Estimate a second-stage outcome from a prepared design without reprojecting X."""
+    if outcome not in prepared.local:
+        raise KeyError(f"Unknown second-stage outcome: {outcome}")
+    return fit_fe_ols_prepared(prepared.local[outcome].to_numpy(), prepared.xd, prepared.fe_groups,
+                               prepared.firm, prepared.year, covariance)
+
+
+def fit_second_stage(use: pd.DataFrame, outcome: str = "log_inefficiency", exposure: str = "esg_lag",
+                     covariance: str = "firm", placebo_seed: int | None = None,
+                     standardize_exposure: bool = True) -> dict:
+    """Compatibility wrapper that prepares and estimates one second-stage specification."""
+    prepared = prepare_second_stage(use, exposure=exposure, placebo_seed=placebo_seed,
+                                    standardize_exposure=standardize_exposure)
+    return fit_second_stage_prepared(prepared, outcome=outcome, covariance=covariance)
+
+
+def restricted_wild_cluster_bootstrap(fit: dict, firm: np.ndarray, replications: int, seed: int,
+                                      batch_size: int = 64) -> float:
     """Restricted Rademacher wild cluster bootstrap-t p-value for the interaction coefficient.
 
-    The coefficient bread, firm inverse index, and CR1 correction are invariant over
-    bootstrap draws and are cached outside the inner loop. This preserves the
-    statistic while avoiding repeated decompositions and group encoding; see the
-    computational rationale for fast wild bootstrap implementations in Roodman et
-    al. (2019), https://doi.org/10.1177/1536867X19830877.
+    The restricted model, coefficient bread, firm encoding and CR1 correction are
+    invariant over draws. Draws are therefore processed in deterministic batches;
+    the random-number stream, null restriction, statistic and finite-sample
+    correction are unchanged. This follows the computational rationale for fast
+    wild-bootstrap implementations in Roodman et al. (2019),
+    https://doi.org/10.1177/1536867X19830877.
     """
+    if replications < 1:
+        raise ValueError("replications must be positive")
+    if batch_size < 1:
+        raise ValueError("batch_size must be positive")
     rng = np.random.default_rng(seed)
     xd, yd = fit["xd"], fit["yd"]
     x_restricted = xd[:, :2]
@@ -331,17 +398,20 @@ def restricted_wild_cluster_bootstrap(fit: dict, firm: np.ndarray, replications:
     bread = np.linalg.pinv(xd.T @ xd)
     cr1_correction = (clusters / (clusters - 1)) * ((n - 1) / (n - k))
     extreme = 0
-    for _ in range(replications):
-        weights = rng.choice(np.array([-1.0, 1.0]), size=clusters)
-        y_star = restricted_mean + residual_restricted * weights[inverse]
-        beta = bread @ (xd.T @ y_star)
-        residual = y_star - xd @ beta
-        scores = np.zeros((clusters, k), dtype=float)
-        np.add.at(scores, inverse, xd * residual[:, None])
-        covariance = bread @ (scores.T @ scores) @ bread * cr1_correction
-        se = math.sqrt(max(covariance[2, 2], 1e-14))
-        t_star = beta[2] / se
-        extreme += int(abs(t_star) >= abs(observed_t))
+    signs = np.array([-1.0, 1.0])
+    membership = np.eye(clusters, dtype=float)[inverse]
+    for start in range(0, replications, batch_size):
+        draws = min(batch_size, replications - start)
+        weights = rng.choice(signs, size=(draws, clusters))
+        y_star = restricted_mean[None, :] + residual_restricted[None, :] * weights[:, inverse]
+        beta = (y_star @ xd) @ bread.T
+        residual = y_star - beta @ xd.T
+        scores = np.einsum("nc,bn,nk->bck", membership, residual, xd, optimize=True)
+        meat = np.einsum("bgk,bgl->bkl", scores, scores, optimize=True)
+        covariance = np.einsum("ij,bjk,kl->bil", bread, meat, bread) * cr1_correction
+        se = np.sqrt(np.maximum(covariance[:, 2, 2], 1e-14))
+        t_star = beta[:, 2] / se
+        extreme += int(np.sum(np.abs(t_star) >= abs(observed_t)))
     return float((extreme + 1) / (replications + 1))
 
 

@@ -25,7 +25,15 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-from esg_monte_carlo import fit_second_stage, load_config, mcse, second_stage_data, simulate_panel
+from esg_monte_carlo import (
+    fit_second_stage,
+    fit_second_stage_prepared,
+    load_config,
+    mcse,
+    prepare_second_stage,
+    second_stage_data,
+    simulate_panel,
+)
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -56,8 +64,9 @@ def basic_second_stage_result(df: pd.DataFrame, cfg: dict, *, availability: str 
                               include_oracle: bool = False) -> dict:
     """Estimate the interaction using estimated residuals and, when requested, true DGP deviations."""
     use = second_stage_data(df, availability=availability, seed=availability_seed, first_stage_fe=first_stage_fe, cfg=cfg)
-    firm = fit_second_stage(use, covariance="firm")
-    two_way = fit_second_stage(use, covariance="two_way")
+    prepared = prepare_second_stage(use)
+    firm = fit_second_stage_prepared(prepared, covariance="firm")
+    two_way = fit_second_stage_prepared(prepared, covariance="two_way")
     raw_interaction = ((use["esg_lag"] - use["esg_lag"].mean()) / use["esg_lag"].std(ddof=0)) * use["big4_lag"]
     first_stage_error = use["first_stage_residual"].to_numpy() - use["true_deviation"].to_numpy()
     result = {
@@ -68,8 +77,8 @@ def basic_second_stage_result(df: pd.DataFrame, cfg: dict, *, availability: str 
         "error_interaction_covariance": safe_covariance(first_stage_error, raw_interaction.to_numpy()),
     }
     if include_oracle:
-        oracle_firm = fit_second_stage(use, outcome="oracle_log_abs_deviation", covariance="firm")
-        oracle_two_way = fit_second_stage(use, outcome="oracle_log_abs_deviation", covariance="two_way")
+        oracle_firm = fit_second_stage_prepared(prepared, outcome="oracle_log_abs_deviation", covariance="firm")
+        oracle_two_way = fit_second_stage_prepared(prepared, outcome="oracle_log_abs_deviation", covariance="two_way")
         result.update({
             "oracle_beta_interaction": float(oracle_firm["beta"][2]),
             "oracle_p_firm": float(oracle_firm["p"][2]),
